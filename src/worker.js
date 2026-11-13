@@ -294,7 +294,23 @@ async function handleApi(req, env, url) {
     await env.DB.prepare("UPDATE certs SET hidden=? WHERE id=?").bind(body.hidden ? 1 : 0, body.certId).run();
     return json({ ok: true });
   }
-
+  if (path === "/admin/notice" && method === "POST") {
+    if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
+    const title = String(body.title || "").trim();
+    const content = String(body.body || "").trim();
+    if (!title) return bad("제목을 입력해 주세요");
+    if (!content) return bad("내용을 입력해 주세요");
+    const date = kstDate();
+    const res = await env.DB.prepare(
+      "INSERT INTO notices(date,title,body) VALUES(?,?,?)"
+    ).bind(date, title.slice(0, 120), content.slice(0, 2000)).run();
+    return json({ ok: true, id: res.meta.last_row_id, date });
+  }
+  if (path === "/admin/notice/delete" && method === "POST") {
+    if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
+    await env.DB.prepare("DELETE FROM notices WHERE id=?").bind(body.id).run();
+    return json({ ok: true });
+  }
   return bad("알 수 없는 요청", 404);
 }
 
