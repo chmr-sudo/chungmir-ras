@@ -15,9 +15,9 @@ database_id = "9a636fa9-6d64-4a8f-9051-83466f40604d"
 
 # 사진 저장 (R2) — 지금은 꺼둠. 사진 기능을 켤 때 아래 3줄의 # 를 지우고
 # R2 버킷(chungmir-ras-photos)을 만든 뒤 다시 배포하세요.
-# [[r2_buckets]]
-# binding = "PHOTOS"
-# bucket_name = "chungmir-ras-photos"
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "chungmir-ras-photos"
 
 # 비밀값은 vars 가 아니라 secret 으로 등록합니다:
 #   wrangler secret put APP_SECRET
