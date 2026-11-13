@@ -437,6 +437,7 @@ const state = {
 const ROLES=[['student','🧒 학생'],['parent','👨‍👩‍👧 학부모'],['teacher','🧑‍🏫 교사'],['kiosk','📟 공용태블릿']];
 const el = id => document.getElementById(id);
 const h = (strings,...v)=>strings.map((s,i)=>s+(v[i]??'')).join('');
+const MIR='<img src="mascot.svg" alt="미르" style="height:1.3em;width:auto;vertical-align:-0.32em;margin:0 1px">';
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function go(view){state.view=view;render();afterNav(view);el('root').querySelector('.screen')?.scrollTo(0,0)}
 function setRole(r){state.role=r;state.view=(r==='teacher'&&!state.teacherAuthed)?'login':'home';render();afterNav(state.view)}
@@ -600,14 +601,14 @@ VIEWS['student:home']=()=>{
     <div class="card hero sky" style="color:var(--ink)">
       <span class="cloud c1"></span><span class="cloud c2"></span>
       <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
-      <span class="big" style="background:#fff;color:var(--sky)">${todayN}일차 · 폰 OFF 🐉</span>
+      <span class="big" style="background:#fff;color:var(--sky)">${todayN}일차 · 폰 OFF ${MIR}</span>
       <h1 style="color:#1b6aa5">미르랑 오늘도<br>세 가지 힘 키우기!</h1>
       <p style="color:#3a6b8a">책·그림·운동 중 하나를 골라 힘을 키워요.</p>
     </div>
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
-        <div style="font-weight:800;font-size:15px">🐉 나의 세 가지 힘</div>
+        <div style="font-weight:800;font-size:15px">${MIR} 나의 세 가지 힘</div>
         <div style="display:flex;gap:6px">
           <span class="pill" style="background:#fff3d6;color:#a7791a">⭐ ${state.bonus}</span>
           <span class="pill" style="background:var(--r-soft);color:#1c7a50">🔥 ${done}일</span>
@@ -618,7 +619,7 @@ VIEWS['student:home']=()=>{
       <button class="btn p" onclick="openCertify()">✨ 오늘의 힘 키우기</button>
     </div>
 
-    <h2 class="sec">🐉 함께 키우는 미르</h2>
+    <h2 class="sec">${MIR} 함께 키우는 미르</h2>
     <div class="card">${growthCard()}</div>
 
     <h2 class="sec">📅 미르랑 28일</h2>
@@ -786,7 +787,7 @@ async function heart(id){try{const r=await api('/react',{method:'POST',auth:true
 VIEWS['student:stats']=()=>{
   const s=STATS.rasSplit;
   return h`<div class="screen">
-    <h2 class="sec" style="margin-top:4px">🐉 우리가 함께 키운 힘</h2>
+    <h2 class="sec" style="margin-top:4px">${MIR} 우리가 함께 키운 힘</h2>
     <p class="muted" style="margin-top:-4px">${DB.period} 동안 청미르 친구들이 모은 세 가지 힘이에요.</p>
     <div class="powerorbs">
       <div class="orb r"><div class="e">📖</div><div class="v">${s.r}</div><div class="k">R · 생각의 힘</div></div>
@@ -794,7 +795,7 @@ VIEWS['student:stats']=()=>{
       <div class="orb s"><div class="e">⚽</div><div class="v">${s.s}</div><div class="k">S · 몸의 힘</div></div>
     </div>
 
-    <h2 class="sec">🐉 함께 키우는 미르</h2>
+    <h2 class="sec">${MIR} 함께 키우는 미르</h2>
     <div class="card">${growthCard()}</div>
 
     <h2 class="sec">🤝 함께한 친구들</h2>
