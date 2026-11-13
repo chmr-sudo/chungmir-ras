@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>청미르초 폰프리 RAS (프로토타입)</title>
+<title>청미르초 폰프리 RAS</title>
+<link rel="icon" type="image/svg+xml" href="mascot.svg">
+<link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --r:#27ae75; --r-soft:#e4f6ec;
-  --a:#9b6bd8; --a-soft:#f0e8fb;
-  --s:#f0943a; --s-soft:#fdeedd;
+  --r:#3b7755; --r-soft:#e8f1ec;
+  --a:#c2742d; --a-soft:#f7ecdd;
+  --s:#3d6e98; --s-soft:#e7eef5;
   --sky:#3aa7ef; --sky-soft:#e3f2fd;
   --ink:#38322c; --sub:#8a8178;
   --line:#efe9e1; --card:#ffffff;
@@ -198,7 +200,7 @@ table.tb td:first-child,table.tb th:first-child{text-align:left}
 .celebrate h3{font-family:var(--display);font-size:24px;margin:10px 0 6px}
 @keyframes boing{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
 /* logo & mascot */
-.brand img.mark{background:#eaf6ff;padding:1px;object-fit:contain}
+.brand img.mark{background:#fff;border-radius:50%;padding:0;object-fit:contain;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .hero-mascot{position:absolute;right:6px;bottom:-10px;width:104px;filter:drop-shadow(0 7px 10px rgba(0,0,0,.20));z-index:1}
 .schoolmark{display:flex;align-items:center;gap:11px;justify-content:center;padding:14px 10px 4px;color:var(--sub)}
 .schoolmark img{width:50px;height:50px;flex:none}
@@ -475,7 +477,7 @@ function render(){
   const showTabs = !teacherGate && !studentGate;
   el('root').innerHTML = h`
     <div class="topbar">
-      <div class="brand"><img class="mark" src="mascot.svg" alt="청미르 마스코트"><span>청미르 RAS<small>폰 OFF &amp; RAS ON</small></span></div>
+      <div class="brand"><img class="mark" src="logo.png" alt="청미르초등학교 교표"><span>청미르 <span style="color:var(--r)">R</span><span style="color:var(--a)">A</span><span style="color:var(--s)">S</span><small>폰 OFF &amp; RAS ON</small></span></div>
       ${state.role==='teacher'?`<button class="phoneoff" onclick="setRole('kiosk')" style="border:0;cursor:pointer">📟 공용태블릿</button>`:`<span class="phoneoff">📵 폰프리</span>`}
       <span class="rolechip">${roleLabel}</span>
     </div>
