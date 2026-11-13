@@ -327,7 +327,10 @@ async function api(path,opts={}){
 }
 const AREA_EMOJI={r:'📖',a:'🎨',s:'⚽'};
 async function loadStats(){const s=await api('/stats');STATS.totalCerts=s.totalCerts;STATS.joinedStudents=s.joined;STATS.rasSplit=s.rasSplit||{r:0,a:0,s:0};STATS.claps=s.claps;STATS.hearts=s.hearts;DB.schoolGoal=s.schoolGoal||1200;if(s.trend)STATS.last14=s.trend.map(t=>({d:t.date.slice(5).replace('-','.'),v:t.count}));}
-async function loadMe(){const me=await api('/me',{method:'POST',auth:true});state.who=me.who||'';DB.myPower=me.power||{r:0,a:0,s:0};state.bonus=me.bonus||0;const done=new Set(me.days||[]);DB.myCal=Array.from({length:28},(_,i)=>({n:i+1,done:done.has(dateOfDay(i+1))}));}
+async function loadMe(){const me=await api('/me',{method:'POST',auth:true});state.who=me.who||'';DB.myPower=me.power||{r:0,a:0,s:0};state.bonus=me.bonus||0;state.fitnessMin=me.fitnessMin||0;state.fitnessCount=me.fitnessCount||0;const done=new Set(me.days||[]);DB.myCal=Array.from({length:28},(_,i)=>({n:i+1,done:done.has(dateOfDay(i+1))}));}
+async function loadBooks(){const b=await api('/books');DB.books=(b.books||[]).map(x=>({id:x.id,title:x.title,author:x.author||'',emoji:x.emoji||'📘'}));}
+async function loadFitnessAdmin(){const r=await api('/admin/fitness',{admin:true});DB._fitness=r.rows||[];}
+async function uploadPhoto(file){const res=await fetch(API+'/upload',{method:'POST',headers:{'content-type':file.type||'image/jpeg','authorization':'Bearer '+getToken()},body:file});let d={};try{d=await res.json();}catch(e){}if(!res.ok)throw new Error(d.error||'사진 업로드 실패');return d.key;}
 async function loadGallery(){const g=await api('/gallery');DB.posts=(g.items||[]).map(it=>({id:it.id,area:it.area,who:it.who,txt:it.note||'오늘의 실천',emoji:AREA_EMOJI[it.area]||'✨',photo:it.photo,claps:it.claps||0,hearts:it.hearts||0,cl:false,he:false}));}
 async function syncAll(){await loadStats();if(getToken())await loadMe();await loadGallery();}
 async function loadContent(){const c=await api('/content');DB.notices=(c.notices||[]).map(n=>({id:n.id,date:n.date,title:n.title,body:n.body}));if(c.period)DB.period=c.period;return c;}
@@ -336,12 +339,15 @@ function afterNav(view){
   if(state.role==='student'&&!getToken())return;
   if(state.role==='student'){
     if(view==='gallery')loadGallery().then(render).catch(()=>{});
-    else if(view==='home'||view==='stats'||view==='record')loadStats().then(()=>getToken()?loadMe():null).then(render).catch(()=>{});
+    else if(view==='zone_r')loadBooks().then(render).catch(()=>{});
+    else if(view==='home'||view==='stats'||view==='record'||view==='zone_s')loadStats().then(()=>getToken()?loadMe():null).then(render).catch(()=>{});
   } else if(state.role==='parent'){
     if(view==='home')loadContent().then(render).catch(()=>{});
     else if(view==='cheer')loadGallery().then(render).catch(()=>{});
   } else if(state.role==='teacher'&&state.teacherAuthed){
-    Promise.all([loadStats().catch(()=>{}),loadAdmin().catch(()=>{}),loadGallery().catch(()=>{})]).then(render);
+    const jobs=[loadStats().catch(()=>{}),loadAdmin().catch(()=>{}),loadGallery().catch(()=>{})];
+    if(view==='manage')jobs.push(loadBooks().catch(()=>{}),loadFitnessAdmin().catch(()=>{}));
+    Promise.all(jobs).then(render);
   }
 }
 
@@ -363,6 +369,7 @@ const DB = {
   myCal: Array.from({length:28},(_,i)=>({n:i+1, done:false})),
   posts:[],
   _students:[],
+  _fitness:[],
   books:[
     {id:1, title:'마당을 나온 암탉', author:'황선미', emoji:'📗', reco:8, reviews:5},
     {id:2, title:'who? 장영실', author:'오영석', emoji:'📘', reco:5, reviews:2},
@@ -432,6 +439,8 @@ const state = {
   pledged:[false,false,false,false,false],
   parentPledged:false,
   bonus:0,
+  fitnessMin:0,
+  fitnessCount:0,
   who:'',
 };
 const ROLES=[['student','🧒 학생'],['parent','👨‍👩‍👧 학부모'],['teacher','🧑‍🏫 교사'],['kiosk','📟 공용태블릿']];
@@ -461,7 +470,7 @@ function myDone(){return DB.myCal.filter(d=>d.done).length}
 const TABS={
   student:[['home','🏠','홈'],['zone','💪','힘키우기'],['gallery','🌟','자랑터'],['stats','☁️','모아보기'],['record','📅','기록']],
   parent:[['home','🏠','홈'],['family','🏡','가정실천'],['cheer','💬','응원']],
-  teacher:[['home','📈','현황'],['students','🧑‍🎓','학생'],['moderate','📝','게시글'],['content','📩','공지']],
+  teacher:[['home','📈','현황'],['students','🧑‍🎓','학생'],['moderate','📝','게시글'],['content','📩','공지'],['manage','⚙️','관리']],
 };
 
 /* ============================ 렌더 ============================ */
@@ -610,8 +619,8 @@ VIEWS['student:home']=()=>{
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
         <div style="font-weight:800;font-size:15px">${MIR} 나의 세 가지 힘</div>
         <div style="display:flex;gap:6px">
-          <span class="pill" style="background:#fff3d6;color:#a7791a">⭐ ${state.bonus}</span>
-          <span class="pill" style="background:var(--r-soft);color:#1c7a50">🔥 ${done}일</span>
+          <span class="pill" style="background:#fff3d6;color:#a7791a">⭐ ${state.bonus} 보너스</span>
+          <span class="pill" style="background:var(--r-soft);color:#1c7a50">🔥 ${done}일 실천</span>
         </div>
       </div>
       ${powerRow(DB.myPower)}
@@ -638,10 +647,10 @@ VIEWS['student:home']=()=>{
 };
 
 /* ======= 학생: 인증 시트 ======= */
-let certArea=null, certPhoto=null;
-function certPhotoPick(ev){ const f=ev.target.files&&ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{certPhoto=r.result; const pv=el('certPhotoPrev'); if(pv)pv.innerHTML=`<img class="photo-thumb" style="margin-top:8px" src="${certPhoto}">`; const b=el('certPhotoBtn'); if(b)b.innerHTML='📷 사진 변경 <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none">';}; r.readAsDataURL(f); }
+let certArea=null, certPhoto=null, certPhotoFile=null;
+function certPhotoPick(ev){ const f=ev.target.files&&ev.target.files[0]; if(!f)return; certPhotoFile=f; const r=new FileReader(); r.onload=()=>{certPhoto=r.result; const pv=el('certPhotoPrev'); if(pv)pv.innerHTML=`<img class="photo-thumb" style="margin-top:8px" src="${certPhoto}">`; const b=el('certPhotoBtn'); if(b)b.innerHTML='📷 사진 변경 <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none">';}; r.readAsDataURL(f); }
 function openCertify(){
-  certArea=null; certPhoto=null;
+  certArea=null; certPhoto=null; certPhotoFile=null;
   overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
     <div class="sheet"><button class="x" onclick="closeOverlay()">✕</button>
       <h3>✨ 오늘의 힘 키우기</h3>
@@ -653,7 +662,12 @@ function openCertify(){
       </div>
       <div class="field" style="margin-top:14px"><label>오늘의 한마디</label>
         <textarea id="certTxt" placeholder="예: 『해리엇』을 읽고 거북이가 궁금해졌어요"></textarea></div>
-      <button class="btn p" onclick="submitCert()">인증 완료하기</button>
+      <div class="field"><label>사진 인증 (선택)</label>
+        <label class="btn ghost" style="cursor:pointer" id="certPhotoBtn">📷 사진 찍기·올리기
+          <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none"></label>
+        <div id="certPhotoPrev"></div>
+        <div class="callout warn" style="margin-top:9px">⚠️ 얼굴·이름표·개인정보가 보이지 않게 찍어 주세요. 부적절한 사진은 선생님이 삭제할 수 있어요.</div></div>
+      <button class="btn p" id="certSubmitBtn" onclick="submitCert()">인증 완료하기</button>
     </div></div>`);
 }
 function pickArea(a){certArea=a;document.querySelectorAll('#certSeg .opt').forEach(o=>o.classList.remove('on'));document.querySelector('#certSeg .opt.'+a).classList.add('on')}
@@ -661,8 +675,13 @@ async function submitCert(){
   if(!certArea){toast('활동을 골라 주세요 🙂');return;}
   const note=(el('certTxt').value||'').trim();
   const pn={r:'생각',a:'감성',s:'몸'}[certArea];
-  try{ await api('/certify',{method:'POST',auth:true,body:{area:certArea,note}}); }
-  catch(e){ toast(e.message||'저장하지 못했어요'); return; }
+  const btn=el('certSubmitBtn'); if(btn){btn.disabled=true;btn.textContent='저장 중…';}
+  try{
+    let photoKey=null;
+    if(certPhotoFile){ try{ photoKey=await uploadPhoto(certPhotoFile); }catch(e){ toast(e.message||'사진 업로드 실패'); if(btn){btn.disabled=false;btn.textContent='인증 완료하기';} return; } }
+    await api('/certify',{method:'POST',auth:true,body:{area:certArea,note,photoKey}});
+  }
+  catch(e){ toast(e.message||'저장하지 못했어요'); if(btn){btn.disabled=false;btn.textContent='인증 완료하기';} return; }
   closeOverlay();
   try{ await syncAll(); }catch(e){}
   const up=stageWentUp();
@@ -696,7 +715,7 @@ VIEWS['student:zone_r']=()=>{
           <div class="muted">학교 안 <b>책마루</b>에서 책을 읽고 인증하면 보너스 점수를 받아요.</div></div>
       </div>
       <div class="spacer"></div>
-      <button class="btn r" onclick="bonusCheck('책마루')">📚 책마루에서 읽었어요</button>
+      <button class="btn r" onclick="openBonus('책마루')">📚 책마루에서 읽었어요 (사진 인증)</button>
     </div>
     <h2 class="sec">📚 추천 도서</h2>
     <div class="card">${list}</div>
@@ -715,12 +734,40 @@ VIEWS['student:zone_a']=()=>{
           <div class="muted"><b>RAS 학교갤러리</b>(예술작품이 전시될 공간)에서 감상·활동을 인증하면 보너스 점수를 받아요.</div></div>
       </div>
       <div class="spacer"></div>
-      <button class="btn a" onclick="bonusCheck('RAS 학교갤러리')">🎨 학교갤러리에서 활동했어요</button>
+      <button class="btn a" onclick="openBonus('RAS 학교갤러리')">🎨 학교갤러리에서 활동했어요 (사진 인증)</button>
     </div>
     <div class="callout">🌟 내가 만든 작품은 자랑터에 인증해 친구들과 나눠요!</div>
   </div>`;
 };
-async function bonusCheck(place){ try{ const r=await api('/bonus',{method:'POST',auth:true,body:{place}}); state.bonus=r.bonus; }catch(e){ toast(e.message||'저장 실패'); return; } celebrate('+2 보너스 점수! 🌟', place+'에서 실천했어요'); setTimeout(render,2200); }
+let bonusPlace=null, bonusPhotoFile=null;
+function bonusPhotoPick(ev){ const f=ev.target.files&&ev.target.files[0]; if(!f)return; bonusPhotoFile=f; const r=new FileReader(); r.onload=()=>{const pv=el('bonusPhotoPrev'); if(pv)pv.innerHTML=`<img class="photo-thumb" style="margin-top:8px" src="${r.result}">`; const b=el('bonusPhotoBtn'); if(b)b.innerHTML='📷 사진 변경 <input type="file" accept="image/*" capture="environment" onchange="bonusPhotoPick(event)" style="display:none">';}; r.readAsDataURL(f); }
+function openBonus(place){
+  bonusPlace=place; bonusPhotoFile=null;
+  const col=place==='책마루'?'r':'a';
+  overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
+    <div class="sheet"><button class="x" onclick="closeOverlay()">✕</button>
+      <h3>🌟 ${place} 인증</h3>
+      <p class="muted" style="margin:-4px 0 14px">${place}에서 활동한 모습을 남기면 <b>+2 보너스 점수</b>를 받아요.</p>
+      <div class="field"><label>오늘의 한마디 (선택)</label>
+        <textarea id="bonusTxt" placeholder="예: ${place}에서 재미있게 활동했어요"></textarea></div>
+      <div class="field"><label>사진 인증 (선택)</label>
+        <label class="btn ghost" style="cursor:pointer" id="bonusPhotoBtn">📷 사진 찍기·올리기
+          <input type="file" accept="image/*" capture="environment" onchange="bonusPhotoPick(event)" style="display:none"></label>
+        <div id="bonusPhotoPrev"></div>
+        <div class="callout warn" style="margin-top:9px">⚠️ 얼굴·이름표·개인정보가 보이지 않게 찍어 주세요. 부적절한 사진은 선생님이 삭제할 수 있어요.</div></div>
+      <button class="btn ${col}" id="bonusSubmitBtn" onclick="submitBonus()">+2 보너스 받기</button>
+    </div></div>`);
+}
+async function submitBonus(){
+  const note=(el('bonusTxt')?.value||'').trim();
+  const btn=el('bonusSubmitBtn'); if(btn){btn.disabled=true;btn.textContent='저장 중…';}
+  let photoKey=null;
+  try{
+    if(bonusPhotoFile){ try{ photoKey=await uploadPhoto(bonusPhotoFile); }catch(e){ toast(e.message||'사진 업로드 실패'); if(btn){btn.disabled=false;btn.textContent='+2 보너스 받기';} return; } }
+    const r=await api('/bonus',{method:'POST',auth:true,body:{place:bonusPlace,note,photoKey}}); state.bonus=r.bonus;
+  }catch(e){ toast(e.message||'저장 실패'); if(btn){btn.disabled=false;btn.textContent='+2 보너스 받기';} return; }
+  closeOverlay(); celebrate('+2 보너스 점수! 🌟', bonusPlace+'에서 실천했어요'); setTimeout(render,2200);
+}
 
 /* 스포츠존 3단계 위저드 */
 const sp={step:0,people:null,place:null,kind:null};
@@ -733,12 +780,36 @@ VIEWS['student:zone_s']=()=>{
   return h`<div class="screen">
     <button class="btn g sm" onclick="${sp.step===0?"go('zone')":'spBack()'}">← ${sp.step===0?'힘키우기':'이전'}</button>
     <h2 class="sec">⚽ 몸의 힘 · 스포츠</h2>
+    ${sp.step===0?fitnessCard()+'<h2 class="sec">🎲 오늘의 추천 놀이 찾기</h2><p class="muted" style="margin-top:-4px">세 가지만 고르면 딱 맞는 놀이를 추천해요.</p>':''}
     <div class="steps">${[0,1,2].map(i=>`<i class="${i<=sp.step?'on':''}"></i>`).join('')}</div>
     <p class="kicker">${sp.step+1} / 3 단계</p>
     <h2 class="sec" style="margin-top:4px">${defs[1]}</h2>
     ${opts}
   </div>`;
 };
+const FIT_KINDS=['줄넘기','달리기','걷기','자전거','구기운동(축구·농구 등)','스트레칭·체조','기타'];
+function fitnessCard(){
+  return h`<div class="card tight" style="background:var(--s-soft);border-color:#cfe0ef">
+    <div style="font-weight:800;color:#2f557a">💪 내 체력관리 기록</div>
+    <div class="muted" style="margin:3px 0 9px">오늘 한 운동과 시간을 기록하면 나의 운동시간이 쌓여요.</div>
+    <div style="display:flex;gap:7px;margin-bottom:11px">
+      <span class="pill" style="background:#fff;color:#2f557a">🏃 누적 ${state.fitnessMin||0}분</span>
+      <span class="pill" style="background:#fff;color:#2f557a">📒 ${state.fitnessCount||0}회</span>
+    </div>
+    <div class="field"><label>운동 종류</label>
+      <select id="fitKind">${FIT_KINDS.map(k=>`<option>${k}</option>`).join('')}</select></div>
+    <div class="field"><label>운동 시간 (분)</label>
+      <input id="fitMin" type="number" inputmode="numeric" min="1" max="600" placeholder="예: 20"></div>
+    <button class="btn s" onclick="submitFitness()">운동 기록하기</button>
+  </div>`;
+}
+async function submitFitness(){
+  const kind=el('fitKind')?.value||''; const minutes=+(el('fitMin')?.value||0);
+  if(!(minutes>=1&&minutes<=600)){toast('운동 시간을 1~600분으로 입력해 주세요');return;}
+  try{ const r=await api('/fitness',{method:'POST',auth:true,body:{kind,minutes}}); state.fitnessMin=r.fitnessMin; state.fitnessCount=r.fitnessCount; }
+  catch(e){ toast(e.message||'저장 실패'); return; }
+  celebrate('운동 기록 완료! 💪',`${kind} ${minutes}분 · 누적 ${state.fitnessMin}분`,'🏃'); setTimeout(render,2000);
+}
 function spPick(key,val){sp[key]=val;setTimeout(()=>{sp.step++;render()},180)}
 function spBack(){sp.step=Math.max(0,sp.step-1);render()}
 function sportsResult(){
@@ -1103,6 +1174,61 @@ async function createNotice(){
 async function deleteNotice(id){
   try{ await api('/admin/notice/delete',{method:'POST',admin:true,body:{id}}); await loadContent(); render(); toast('공지를 삭제했어요'); }
   catch(e){ toast(e.message||'삭제 실패'); }
+}
+
+/* ======= 교사: 관리 (추천도서 + 체력기록) ======= */
+VIEWS['teacher:manage']=()=>{
+  const books=(DB.books||[]).length?(DB.books).map(b=>h`<div class="lrow"><div class="av">${b.emoji||'📘'}</div>
+    <div style="flex:1"><div class="nm" style="font-size:14px">${esc(b.title)}</div><div class="sb">${esc(b.author||'')}</div></div>
+    <button class="iconbtn danger" onclick="deleteBook(${b.id})">삭제</button></div>`).join('')
+    :'<div class="emptyish"><span class="e">🌱</span>등록된 추천 도서가 없어요.</div>';
+  const fit=(DB._fitness||[]);
+  const withRec=fit.filter(r=>r.totalMin>0).sort((a,b)=>b.totalMin-a.totalMin);
+  const totalMin=fit.reduce((s,r)=>s+(r.totalMin||0),0);
+  const frows=withRec.length?withRec.map(r=>h`<div class="lrow"><div class="av">🏃</div>
+    <div style="flex:1"><div class="nm" style="font-size:14px">${esc(r.name)} <span class="sb">(${r.grade}-${r.room}-${r.number})</span></div><div class="sb">${r.sessions}회 기록</div></div>
+    <span class="pill" style="background:var(--s-soft);color:#2f557a">${r.totalMin}분</span></div>`).join('')
+    :'<div class="emptyish"><span class="e">🌱</span>아직 운동 기록이 없어요.</div>';
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">📚 추천 도서 관리</h2>
+    <p class="muted" style="margin-top:-4px">여기서 올린 도서는 학생 '독서' 화면에 표시돼요.</p>
+    <div class="card">
+      <div class="field"><label>책 제목</label><input id="bkTitle" placeholder="예: 마당을 나온 암탉"></div>
+      <div class="field"><label>지은이</label><input id="bkAuthor" placeholder="예: 황선미"></div>
+      <button class="btn p" onclick="addBook()">+ 도서 추가</button>
+    </div>
+    <div class="card">${books}</div>
+
+    <h2 class="sec">🏃 체력관리 기록</h2>
+    <p class="muted" style="margin-top:-4px">학생들의 누적 운동시간이에요. 전체 명단은 CSV로 받을 수 있어요.</p>
+    <div class="tiles">
+      <div class="tile accent"><div class="v">${totalMin}</div><div class="k">전체 운동시간(분)</div></div>
+      <div class="tile accent"><div class="v">${withRec.length}</div><div class="k">기록한 학생</div></div>
+    </div>
+    <button class="btn g" onclick="downloadFitnessCSV()">📥 체력기록 전체 CSV 다운로드</button>
+    <div class="spacer"></div>
+    <div class="card">${frows}</div>
+  </div>`;
+};
+async function addBook(){
+  const title=(el('bkTitle')?.value||'').trim(), author=(el('bkAuthor')?.value||'').trim();
+  if(!title){toast('책 제목을 입력해 주세요');return;}
+  try{ await api('/admin/book',{method:'POST',admin:true,body:{title,author}}); await loadBooks(); render(); toast('도서를 추가했어요'); }
+  catch(e){ toast(e.message||'추가 실패'); }
+}
+async function deleteBook(id){
+  try{ await api('/admin/book/delete',{method:'POST',admin:true,body:{id}}); await loadBooks(); render(); toast('도서를 삭제했어요'); }
+  catch(e){ toast(e.message||'삭제 실패'); }
+}
+function downloadFitnessCSV(){
+  const rows=(DB._fitness||[]);
+  const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const head=['학년','반','번호','이름','총 운동시간(분)','기록 횟수'];
+  const lines=[head.join(',')].concat(rows.map(r=>[r.grade,r.room,r.number,esc2(r.name),r.totalMin,r.sessions].join(',')));
+  const csv='﻿'+lines.join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='청미르_체력기록.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 /* ===== 한글 조합 오토마타 (화면 키보드용) ===== */
