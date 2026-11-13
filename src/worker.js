@@ -134,7 +134,8 @@ async function handleApi(req, env, url) {
     const days = new Set();
     for (const c of certs.results) { power[c.area] = (power[c.area] || 0) + 1; days.add(c.date); }
     const b = await env.DB.prepare("SELECT COALESCE(SUM(points),0) AS p FROM bonus WHERE student_id=?").bind(id).first();
-    return json({ who: maskWho(s), power, days: [...days], bonus: b.p || 0 });
+    const fit = await env.DB.prepare("SELECT COALESCE(SUM(minutes),0) AS m, COUNT(*) AS c FROM fitness WHERE student_id=?").bind(id).first();
+    return json({ who: maskWho(s), power, days: [...days], bonus: b.p || 0, fitnessMin: fit.m || 0, fitnessCount: fit.c || 0 });
   }
 
   // ---- 사진 업로드 (R2) ----
@@ -178,8 +179,8 @@ async function handleApi(req, env, url) {
     const id = await authStudent(req, env);
     if (!id) return bad("로그인이 필요해요", 401);
     const place = (body.place || "").slice(0, 40);
-    await env.DB.prepare("INSERT INTO bonus(student_id,place,points,date) VALUES(?,?,2,?)")
-      .bind(id, place, kstDate()).run();
+    await env.DB.prepare("INSERT INTO bonus(student_id,place,points,date,photo_key) VALUES(?,?,2,?,?)")
+      .bind(id, place, kstDate(), body.photoKey || null).run();
     const b = await env.DB.prepare("SELECT COALESCE(SUM(points),0) AS p FROM bonus WHERE student_id=?").bind(id).first();
     return json({ ok: true, bonus: b.p });
   }
@@ -195,7 +196,8 @@ async function handleApi(req, env, url) {
     let claps = 0, hearts = 0;
     for (const row of react.results) { if (row.kind === "clap") claps = row.c; if (row.kind === "heart") hearts = row.c; }
     const goal = parseInt((await getSetting(env, "school_goal", "1200")), 10);
-        const today = kstDate();
+    // 최근 14일 추이 (KST 날짜 기준)
+    const today = kstDate();
     const startDt = new Date(today + "T00:00:00Z");
     startDt.setUTCDate(startDt.getUTCDate() - 13);
     const startStr = startDt.toISOString().slice(0, 10);
@@ -294,6 +296,7 @@ async function handleApi(req, env, url) {
     await env.DB.prepare("UPDATE certs SET hidden=? WHERE id=?").bind(body.hidden ? 1 : 0, body.certId).run();
     return json({ ok: true });
   }
+  // ---- 공지(가정통신문) 작성/삭제 ----
   if (path === "/admin/notice" && method === "POST") {
     if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
     const title = String(body.title || "").trim();
@@ -311,6 +314,51 @@ async function handleApi(req, env, url) {
     await env.DB.prepare("DELETE FROM notices WHERE id=?").bind(body.id).run();
     return json({ ok: true });
   }
+  // ---- 추천 도서 ----
+  if (path === "/books" && method === "GET") {
+    const rows = await env.DB.prepare("SELECT id,title,author,emoji FROM books ORDER BY id DESC").all();
+    return json({ books: rows.results });
+  }
+  if (path === "/admin/book" && method === "POST") {
+    if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
+    const title = String(body.title || "").trim();
+    if (!title) return bad("책 제목을 입력해 주세요");
+    const author = String(body.author || "").trim().slice(0, 60);
+    const emoji = String(body.emoji || "📘").slice(0, 4) || "📘";
+    const res = await env.DB.prepare("INSERT INTO books(title,author,emoji,created_at) VALUES(?,?,?,?)")
+      .bind(title.slice(0, 80), author, emoji, nowISO()).run();
+    return json({ ok: true, id: res.meta.last_row_id });
+  }
+  if (path === "/admin/book/delete" && method === "POST") {
+    if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
+    await env.DB.prepare("DELETE FROM books WHERE id=?").bind(body.id).run();
+    return json({ ok: true });
+  }
+  // ---- 개별 체력관리(운동 기록) ----
+  if (path === "/fitness" && method === "POST") {
+    const id = await authStudent(req, env);
+    if (!id) return bad("로그인이 필요해요", 401);
+    const kind = String(body.kind || "").trim().slice(0, 30);
+    const minutes = Math.round(Number(body.minutes) || 0);
+    if (!kind) return bad("운동 종류를 골라 주세요");
+    if (!(minutes >= 1 && minutes <= 600)) return bad("운동 시간은 1~600분 사이로 입력해 주세요");
+    await env.DB.prepare("INSERT INTO fitness(student_id,kind,minutes,date,created_at) VALUES(?,?,?,?,?)")
+      .bind(id, kind, minutes, kstDate(), nowISO()).run();
+    const f = await env.DB.prepare("SELECT COALESCE(SUM(minutes),0) AS m, COUNT(*) AS c FROM fitness WHERE student_id=?").bind(id).first();
+    return json({ ok: true, fitnessMin: f.m || 0, fitnessCount: f.c || 0 });
+  }
+  if (path === "/admin/fitness" && method === "GET") {
+    if (!(await authAdmin(req, env))) return bad("관리자 전용", 401);
+    const rows = await env.DB.prepare(
+      `SELECT s.grade, s.room, s.number, s.name,
+              COALESCE(SUM(f.minutes),0) AS totalMin,
+              COUNT(f.id) AS sessions
+       FROM students s LEFT JOIN fitness f ON f.student_id = s.id
+       GROUP BY s.id ORDER BY s.grade, s.room, s.number`
+    ).all();
+    return json({ rows: rows.results });
+  }
+
   return bad("알 수 없는 요청", 404);
 }
 
