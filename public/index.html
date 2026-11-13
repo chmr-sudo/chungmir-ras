@@ -893,7 +893,7 @@ VIEWS['parent:home']=()=>{
   </div>
   <h2 class="sec">📩 가정통신문 · 소식</h2>
   <div class="card">${nx||'<div class="muted">아직 등록된 소식이 없어요.</div>'}</div>
-  <div class="callout">📵 등교 보관(IN) → 하교 반환(OUT) → 비상 해제(EMERGENCY). 긴급 시 학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다.</div>
+  <div class="callout">📵 등교 OFF → 교문 밖(ON) → 비상 연락(EMERGENCY). 긴급 시 학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다. (031-540-7200)</div>
 </div>`;};
 function openNotice(id){const n=(DB.notices||[]).find(x=>x.id===id);if(!n)return;
   overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
