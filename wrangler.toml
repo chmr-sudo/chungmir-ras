@@ -11,7 +11,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "chungmir_ras"
-database_id = "여기에_D1_DATABASE_ID_붙여넣기"
+database_id = "9a636fa9-6d64-4a8f-9051-83466f40604d"
 
 # 사진 저장 (R2) — 지금은 꺼둠. 사진 기능을 켤 때 아래 3줄의 # 를 지우고
 # R2 버킷(chungmir-ras-photos)을 만든 뒤 다시 배포하세요.
