@@ -726,7 +726,9 @@ const sp={step:0,people:null,place:null,kind:null};
 VIEWS['student:zone_s']=()=>{
   if(sp.step>=3) return sportsResult();
   const defs=[['people','함께 놀 친구는 몇 명이에요?'],['place','어디에서 놀아요?'],['kind','어떤 놀이가 좋아요?']][sp.step];
-  const opts=DB.sportsData[defs[0]].map(o=>h`<div class="opt-card ${sp[defs[0]]===o.k?'on':''}" onclick="spPick('${defs[0]}','${o.k}')"><span class="e">${o.e}</span><span>${o.l}</span></div>`).join('');
+  let optList=DB.sportsData[defs[0]];
+  if(defs[0]==='kind' && sp.place==='class') optList=optList.filter(o=>o.k!=='run' && o.k!=='ball');
+  const opts=optList.map(o=>h`<div class="opt-card ${sp[defs[0]]===o.k?'on':''}" onclick="spPick('${defs[0]}','${o.k}')"><span class="e">${o.e}</span><span>${o.l}</span></div>`).join('');
   return h`<div class="screen">
     <button class="btn g sm" onclick="${sp.step===0?"go('zone')":'spBack()'}">← ${sp.step===0?'힘키우기':'이전'}</button>
     <h2 class="sec">⚽ 몸의 힘 · 스포츠</h2>
