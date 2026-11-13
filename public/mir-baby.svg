@@ -1,0 +1,29 @@
+<svg viewBox="0 0 180 196" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="아기 미르">
+<defs>
+  <linearGradient id="body" x1="0.3" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="#8ad8f8"/><stop offset="1" stop-color="#48b2ef"/></linearGradient>
+  <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#ffeccf"/></linearGradient>
+  <radialGradient id="blush" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff9fb4"/><stop offset="1" stop-color="#ff9fb4" stop-opacity="0"/></radialGradient>
+</defs>
+<style>.ol{stroke:#4f9fd0;stroke-width:4.5;stroke-linejoin:round;stroke-linecap:round}</style>
+<ellipse cx="90" cy="184" rx="38" ry="7" fill="#48b2ef" opacity="0.12"/>
+<!-- feet -->
+<ellipse class="ol" cx="74" cy="168" rx="13" ry="9" fill="url(#body)"/>
+<ellipse class="ol" cx="106" cy="168" rx="13" ry="9" fill="url(#body)"/>
+<!-- body (little round) -->
+<ellipse class="ol" cx="90" cy="122" rx="48" ry="46" fill="url(#body)"/>
+<ellipse cx="74" cy="104" rx="18" ry="14" fill="#fff" opacity="0.35"/>
+<!-- belly -->
+<ellipse cx="90" cy="132" rx="24" ry="26" fill="url(#belly)"/>
+<!-- eggshell hat -->
+<path class="ol" d="M52 84 L60 70 L68 82 L77 66 L86 80 L95 64 L104 80 L113 68 L122 82 L130 70 L136 84 Q94 96 52 84 Z" fill="#fffdf6"/>
+<!-- cheeks -->
+<ellipse cx="66" cy="132" rx="10" ry="8" fill="url(#blush)"/>
+<ellipse cx="114" cy="132" rx="10" ry="8" fill="url(#blush)"/>
+<!-- eyes -->
+<ellipse cx="76" cy="120" rx="8" ry="9.5" fill="#37474f"/>
+<ellipse cx="104" cy="120" rx="8" ry="9.5" fill="#37474f"/>
+<circle cx="79" cy="116" r="2.8" fill="#fff"/>
+<circle cx="107" cy="116" r="2.8" fill="#fff"/>
+<!-- smile -->
+<path d="M82 134 Q90 142 98 134" fill="none" stroke="#4f9fd0" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="미르 알">
+<defs>
+  <linearGradient id="egg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#ffe9c8"/></linearGradient>
+  <radialGradient id="blush" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff9fb4"/><stop offset="1" stop-color="#ff9fb4" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="80" cy="190" rx="40" ry="7" fill="#48b2ef" opacity="0.1"/>
+<path d="M80 22 C110 22 132 70 132 120 C132 162 108 186 80 186 C52 186 28 162 28 120 C28 70 50 22 80 22 Z" fill="url(#egg)" stroke="#4f9fd0" stroke-width="4.5" stroke-linejoin="round"/>
+<!-- sheen -->
+<ellipse cx="62" cy="70" rx="14" ry="20" fill="#fff" opacity="0.5"/>
+<!-- sleepy happy face -->
+<path d="M57 110 Q64 102 71 110" fill="none" stroke="#4f9fd0" stroke-width="4" stroke-linecap="round"/>
+<path d="M89 110 Q96 102 103 110" fill="none" stroke="#4f9fd0" stroke-width="4" stroke-linecap="round"/>
+<ellipse cx="56" cy="120" rx="8" ry="6" fill="url(#blush)"/>
+<ellipse cx="104" cy="120" rx="8" ry="6" fill="url(#blush)"/>
+<path d="M71 124 Q80 132 89 124" fill="none" stroke="#4f9fd0" stroke-width="4" stroke-linecap="round"/>
+<!-- R A S dots -->
+<circle cx="60" cy="150" r="5.5" fill="#86c541"/>
+<circle cx="80" cy="158" r="5.5" fill="#ef79ac"/>
+<circle cx="100" cy="150" r="5.5" fill="#f6a24a"/>
+<!-- sparkle -->
+<path d="M116 52 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5 z" fill="#ffd23f"/>
+</svg>

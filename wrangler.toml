@@ -1,0 +1,23 @@
+name = "chungmir-ras"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# 정적 화면(public 폴더: index.html, mascot.svg 등)을 함께 서빙
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# 데이터베이스 (D1) — database_id 는 `wrangler d1 create` 후 붙여넣기
+[[d1_databases]]
+binding = "DB"
+database_name = "chungmir_ras"
+database_id = "여기에_D1_DATABASE_ID_붙여넣기"
+
+# 사진 저장 (R2) — 지금은 꺼둠. 사진 기능을 켤 때 아래 3줄의 # 를 지우고
+# R2 버킷(chungmir-ras-photos)을 만든 뒤 다시 배포하세요.
+# [[r2_buckets]]
+# binding = "PHOTOS"
+# bucket_name = "chungmir-ras-photos"
+
+# 비밀값은 vars 가 아니라 secret 으로 등록합니다:
+#   wrangler secret put APP_SECRET

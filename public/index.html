@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>청미르초 폰프리 RAS (프로토타입)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --r:#27ae75; --r-soft:#e4f6ec;
+  --a:#9b6bd8; --a-soft:#f0e8fb;
+  --s:#f0943a; --s-soft:#fdeedd;
+  --sky:#3aa7ef; --sky-soft:#e3f2fd;
+  --ink:#38322c; --sub:#8a8178;
+  --line:#efe9e1; --card:#ffffff;
+  --bg1:#fff7ec; --bg2:#eaf6ff;
+  --ok:#22a06b; --warn:#e8604c;
+  --brown:#6b5647;
+  --radius:20px;
+  --shadow:0 8px 24px rgba(120,100,70,.10);
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --display:"Jua","Apple SD Gothic Neo",var(--font);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font); color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  min-height:100vh; display:flex; justify-content:center; align-items:flex-start;
+}
+.app{
+  width:100%; max-width:460px; min-height:100vh; background:#fffdf9;
+  position:relative; box-shadow:0 0 50px rgba(110,90,60,.12); overflow:hidden;
+  display:flex; flex-direction:column;
+}
+/* preview role switch */
+.preview{
+  background:#2d2620; color:#fff; font-size:12px; display:flex; align-items:center;
+  gap:6px; padding:6px 10px; flex-wrap:wrap;
+}
+.preview b{font-weight:700;opacity:.8;font-size:11px}
+.preview .seg{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.preview button{
+  border:0; background:#4a4038; color:#e9e2d8; font-size:12px; padding:4px 9px;
+  border-radius:999px; cursor:pointer; font-family:var(--font);
+}
+.preview button.on{background:#ffd23f;color:#3a2e1c;font-weight:700}
+/* topbar */
+.topbar{
+  display:flex; align-items:center; gap:10px; padding:12px 16px 10px;
+  position:sticky; top:0; background:rgba(255,253,249,.92); backdrop-filter:blur(6px);
+  z-index:20; border-bottom:1px solid var(--line);
+}
+.brand{font-family:var(--display); font-size:20px; display:flex; align-items:center; gap:7px; letter-spacing:.3px}
+.brand .mark{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--sky),#6bd0ff); color:#fff; font-size:17px;
+  box-shadow:0 4px 10px rgba(58,167,239,.4)
+}
+.brand small{display:block;font-family:var(--font);font-size:10px;color:var(--sub);font-weight:400;margin-top:-2px}
+.topbar .rolechip{margin-left:auto;font-size:11px;background:var(--sky-soft);color:#1b73b3;padding:4px 10px;border-radius:999px;font-weight:700}
+.phoneoff{font-size:11px;color:var(--brown);background:#f3ece2;padding:4px 9px;border-radius:999px;font-weight:700}
+/* screen */
+.screen{flex:1; min-height:0; overflow-y:auto; padding:14px 16px 96px; -webkit-overflow-scrolling:touch}
+.screen::-webkit-scrollbar{width:0}
+h2.sec{font-family:var(--display);font-size:18px;margin:18px 2px 10px;display:flex;align-items:center;gap:7px}
+h2.sec:first-child{margin-top:4px}
+.muted{color:var(--sub);font-size:13px;line-height:1.55}
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card.tight{padding:13px}
+.hero{
+  border:0;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#ff9a56,#ff7e8a 55%,#a06be0);
+}
+.hero h1{font-family:var(--display);font-size:22px;margin:0 0 6px;line-height:1.3}
+.hero p{margin:0;font-size:13px;opacity:.95;line-height:1.55}
+.hero .big{font-family:var(--display);font-size:15px;background:rgba(255,255,255,.22);display:inline-block;padding:3px 12px;border-radius:999px;margin-bottom:10px}
+.hero .deco{position:absolute;right:-10px;bottom:-14px;font-size:92px;opacity:.18;transform:rotate(-8deg)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:14px;padding:13px 16px;font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;width:100%;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.p{background:linear-gradient(135deg,var(--sky),#59c0ff);color:#fff;box-shadow:0 6px 14px rgba(58,167,239,.35)}
+.btn.g{background:#f3ece2;color:var(--brown)}
+.btn.r{background:var(--r);color:#fff}
+.btn.a{background:var(--a);color:#fff}
+.btn.s{background:var(--s);color:#fff}
+.btn.sm{padding:9px 12px;font-size:13px;width:auto;border-radius:11px}
+.btn.ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.row{display:flex;gap:9px}
+.row .btn{flex:1}
+/* participation track */
+.track{margin:2px 0 4px}
+.track .lane{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.track .lab{width:46px;font-size:13px;font-weight:700;color:var(--brown)}
+.track .bar{flex:1;height:14px;background:#f1ebe2;border-radius:999px;overflow:hidden;position:relative}
+.track .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ffd23f,var(--s))}
+.track .pct{width:46px;text-align:right;font-size:12px;color:var(--sub);font-weight:700}
+/* zone cards */
+.zone{display:flex;align-items:center;gap:13px;padding:15px;border-radius:18px;margin-bottom:11px;cursor:pointer;border:1.5px solid transparent;transition:transform .08s}
+.zone:active{transform:scale(.98)}
+.zone .ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:25px;flex:none}
+.zone .t{font-family:var(--display);font-size:17px}
+.zone .d{font-size:12px;color:var(--sub);margin-top:2px}
+.zone.r{background:var(--r-soft);border-color:#c7ecd6}.zone.r .ic{background:var(--r);color:#fff}.zone.r .t{color:#1c7a50}
+.zone.a{background:var(--a-soft);border-color:#e3d4f7}.zone.a .ic{background:var(--a);color:#fff}.zone.a .t{color:#6b3fa8}
+.zone.s{background:var(--s-soft);border-color:#f8ddc0}.zone.s .ic{background:var(--s);color:#fff}.zone.s .t{color:#b8651a}
+.chev{margin-left:auto;color:var(--sub);font-size:20px}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .d{aspect-ratio:1;border-radius:11px;background:#f6f1e9;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--sub);position:relative;border:1.5px solid transparent;cursor:pointer}
+.cal .d .n{font-weight:700;color:var(--ink);font-size:13px}
+.cal .d.done{background:var(--r-soft);border-color:var(--r)}
+.cal .d.done .n{color:#1c7a50}
+.cal .d.done::after{content:"✓";position:absolute;top:2px;right:5px;color:var(--r);font-weight:900;font-size:11px}
+.cal .d.sp{box-shadow:inset 0 0 0 2px #ffd23f}
+.cal .d.future{opacity:.45}
+.cal .d.today{border-color:var(--sky)}
+.cdow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cdow span{text-align:center;font-size:11px;color:var(--sub)}
+/* gallery */
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.post{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.post .ph{height:92px;display:grid;place-items:center;font-size:40px}
+.post .meta{padding:9px 10px}
+.post .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;margin-bottom:4px}
+.post .who{font-size:11px;color:var(--sub)}
+.post .txt{font-size:12px;margin:3px 0 7px;line-height:1.4}
+.react{display:flex;gap:6px}
+.react button{border:1px solid var(--line);background:#fff;border-radius:999px;font-size:11px;padding:3px 8px;cursor:pointer;display:flex;gap:3px;align-items:center;font-family:var(--font)}
+.react button.on{background:#fff4f4;border-color:#ffc9c9}
+.tag.r{background:var(--r-soft);color:#1c7a50}.tag.a{background:var(--a-soft);color:#6b3fa8}.tag.s{background:var(--s-soft);color:#b8651a}
+/* filter chips */
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}
+.chips::-webkit-scrollbar{height:0}
+.chip{white-space:nowrap;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer;color:var(--sub);font-weight:600}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:var(--shadow)}
+.tile .v{font-family:var(--display);font-size:24px}
+.tile .k{font-size:11px;color:var(--sub);margin-top:1px}
+.tile.accent{background:linear-gradient(135deg,#fff5e6,#ffe9ef)}
+/* bars chart */
+.bars{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:8px}
+.bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.bars .b .bar{width:70%;background:linear-gradient(180deg,#6bd0ff,var(--sky));border-radius:5px 5px 0 0;min-height:3px}
+.bars .b .bl{font-size:9px;color:var(--sub)}
+/* ras split */
+.split{display:flex;height:16px;border-radius:999px;overflow:hidden;margin:8px 0}
+.split i{display:block}
+.legend{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px;color:var(--sub)}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* table */
+table.tb{width:100%;border-collapse:collapse;font-size:13px}
+table.tb th,table.tb td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center}
+table.tb th{color:var(--sub);font-size:11px;font-weight:700}
+table.tb td:first-child,table.tb th:first-child{text-align:left}
+.rank{font-family:var(--display);color:var(--s)}
+/* list rows */
+.lrow{display:flex;align-items:center;gap:11px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow .av{width:38px;height:38px;border-radius:11px;background:var(--sky-soft);display:grid;place-items:center;font-size:18px;flex:none}
+.lrow .nm{font-weight:700;font-size:14px}
+.lrow .sb{font-size:12px;color:var(--sub)}
+.lrow .rt{margin-left:auto;display:flex;gap:6px}
+.iconbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 9px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.iconbtn.danger{color:var(--warn);border-color:#f6d4cf}
+/* form */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px;font-family:var(--font);background:#fff}
+.field textarea{resize:vertical;min-height:70px}
+.hint{font-size:11px;color:var(--sub);margin-top:4px}
+.seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.seg3 .opt{border:2px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;font-weight:700;font-size:13px}
+.seg3 .opt .e{font-size:26px;display:block;margin-bottom:3px}
+.seg3 .opt.r.on{border-color:var(--r);background:var(--r-soft)}
+.seg3 .opt.a.on{border-color:var(--a);background:var(--a-soft)}
+.seg3 .opt.s.on{border-color:var(--s);background:var(--s-soft)}
+/* modal / sheet */
+.sheet-bg{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;background:rgba(40,30,20,.5);z-index:40;display:flex;align-items:flex-end;animation:fade .2s}
+.sheet{background:#fffdf9;width:100%;border-radius:24px 24px 0 0;padding:18px 18px 24px;max-height:90%;overflow-y:auto;animation:up .25s}
+.sheet h3{font-family:var(--display);font-size:19px;margin:2px 0 12px;display:flex;align-items:center;gap:7px}
+.sheet .x{position:absolute;top:-46px;right:4px;background:#fff;border:0;width:36px;height:36px;border-radius:50%;font-size:17px;cursor:pointer}
+@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+/* toast */
+.toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:#2d2620;color:#fff;padding:11px 18px;border-radius:14px;font-size:13px;z-index:60;box-shadow:0 10px 24px rgba(0,0,0,.25);animation:pop .3s;max-width:88%;text-align:center}
+@keyframes pop{from{transform:translate(-50%,10px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+/* celebrate */
+.celebrate{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:70;display:grid;place-items:center;background:rgba(255,253,249,.96);text-align:center;padding:30px;animation:fade .2s}
+.celebrate .big{font-size:80px;animation:boing .6s}
+.celebrate h3{font-family:var(--display);font-size:24px;margin:10px 0 6px}
+@keyframes boing{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+/* logo & mascot */
+.brand img.mark{background:#eaf6ff;padding:1px;object-fit:contain}
+.hero-mascot{position:absolute;right:6px;bottom:-10px;width:104px;filter:drop-shadow(0 7px 10px rgba(0,0,0,.20));z-index:1}
+.schoolmark{display:flex;align-items:center;gap:11px;justify-content:center;padding:14px 10px 4px;color:var(--sub)}
+.schoolmark img{width:50px;height:50px;flex:none}
+.schoolmark b{font-family:var(--display);font-size:16px;color:var(--brown);display:block;line-height:1.2}
+.schoolmark small{font-size:9px;letter-spacing:.5px}
+.mascot-badge{width:120px;height:120px;margin:0 auto 6px;display:block}
+/* bottom nav */
+.tabbar{position:sticky;bottom:0;display:flex;background:rgba(255,253,249,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:20}
+.tabbar button{flex:1;border:0;background:none;padding:9px 2px 10px;cursor:pointer;color:var(--sub);font-family:var(--font);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600}
+.tabbar button .i{font-size:20px;line-height:1}
+.tabbar button.on{color:var(--sky)}
+.tabbar button.on .i{transform:translateY(-1px)}
+/* misc */
+.callout{background:var(--sky-soft);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.55;color:#1b5e8a}
+.callout.warn{background:#fdeeea;color:#a2442f}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#f3ece2;color:var(--brown)}
+.divider{height:1px;background:var(--line);margin:14px 0}
+.center{text-align:center}
+.spacer{height:6px}
+.emptyish{text-align:center;color:var(--sub);padding:28px 10px;font-size:13px}
+.emptyish .e{font-size:40px;display:block;margin-bottom:8px}
+.badge-rank{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#f3ece2;font-weight:800;font-size:12px;color:var(--brown)}
+.badge-rank.g1{background:#ffe9a8;color:#a7791a}
+.kicker{font-size:11px;letter-spacing:1px;font-weight:800;color:var(--sub);text-transform:uppercase}
+.steps{display:flex;gap:6px;margin:4px 0 14px}
+.steps i{flex:1;height:6px;border-radius:999px;background:#eee4d6}
+.steps i.on{background:var(--sky)}
+.opt-card{border:2px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:11px;font-size:14px}
+.opt-card .e{font-size:24px}
+.opt-card.on{border-color:var(--sky);background:var(--sky-soft)}
+/* on-screen keyboard */
+.kbwrap{background:#e7edf2;border-radius:16px;padding:8px;margin-top:12px}
+.kbrow{display:flex;gap:5px;margin-bottom:5px;justify-content:center}
+.kbrow:last-child{margin-bottom:0}
+.kbkey{flex:1;min-width:0;border:0;background:#fff;border-radius:9px;padding:12px 0;font-size:18px;font-weight:700;font-family:var(--font);box-shadow:0 2px 0 #c3ccd4;cursor:pointer;color:var(--ink)}
+.kbkey:active{transform:translateY(2px);box-shadow:none}
+.kbkey.fn{background:#cdd6de;font-size:14px}
+.kbkey.fn.wide{flex:2.4}
+.kbkey.fn.on{background:#ffd23f}
+.kbbox{min-height:54px;background:#fff;border:2px solid var(--line);border-radius:13px;padding:13px 15px;font-size:20px;line-height:1.4;word-break:break-all}
+.kbbox .ph{color:var(--sub);font-size:15px}
+.caret{display:inline-block;width:2px;height:22px;background:var(--sky);vertical-align:-4px;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+.stepper button{border:0;background:#f3ece2;width:46px;height:48px;font-size:22px;cursor:pointer;color:var(--brown)}
+.stepper .val{flex:1;text-align:center;font-weight:800;font-size:19px}
+.stepgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:4px}
+.stepgrid .lab{font-size:12px;color:var(--sub);text-align:center;margin-bottom:4px;font-weight:700}
+.photo-thumb{width:84px;height:84px;border-radius:14px;object-fit:cover;border:2px solid var(--line)}
+/* ===== 청미르 하늘 컨셉 ===== */
+.sky{background:linear-gradient(170deg,#cdeeff,#eaf7ff 62%,#fffef9)!important;border:0}
+.sky .cloud{position:absolute;background:#fff;border-radius:999px;opacity:.9;z-index:0}
+.hero .big,.hero h1,.hero p{position:relative;z-index:2}
+.sky .c1{width:66px;height:20px;top:16px;left:-12px;box-shadow:26px 7px 0 -3px #fff}
+.sky .c2{width:46px;height:15px;top:46px;right:14px;opacity:.85}
+.power{display:flex;flex-direction:column;gap:12px}
+.pw{display:flex;align-items:center;gap:11px}
+.pw .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:21px;flex:none;color:#fff}
+.pw.r .ic{background:var(--r)}.pw.a .ic{background:var(--a)}.pw.s .ic{background:var(--s)}
+.pw .nm{font-weight:800;font-size:14px}
+.pw .nm small{font-weight:600;color:var(--sub);font-size:11px;margin-left:5px}
+.pw .bar{height:12px;background:#f1ebe2;border-radius:999px;overflow:hidden;margin-top:6px}
+.pw .fill{height:100%;border-radius:999px}
+.pw.r .fill{background:var(--r)}.pw.a .fill{background:var(--a)}.pw.s .fill{background:var(--s)}
+.pw .v{font-family:var(--display);font-size:17px;width:26px;text-align:right}
+.journey{position:relative;height:62px;background:linear-gradient(170deg,#d9f0ff,#eef9ff);border-radius:16px;overflow:hidden}
+.journey .path{position:absolute;left:12px;right:12px;top:40px;height:6px;background:#fff;border-radius:999px}
+.journey .pfill{position:absolute;left:12px;top:40px;height:6px;background:linear-gradient(90deg,#9bd8f7,var(--sky));border-radius:999px}
+.journey .mir{position:absolute;top:6px;width:36px;transform:translateX(-50%);filter:drop-shadow(0 3px 4px rgba(0,0,0,.15));transition:left .6s}
+.journey .goal{position:absolute;right:8px;top:12px;font-size:22px}
+.powerorbs{display:flex;gap:10px}
+.orb{flex:1;border-radius:18px;padding:15px 8px;text-align:center;color:#fff;box-shadow:var(--shadow)}
+.orb.r{background:linear-gradient(160deg,#3ecf8e,#20a267)}
+.orb.a{background:linear-gradient(160deg,#b884ea,#9460d0)}
+.orb.s{background:linear-gradient(160deg,#ffb45e,#ee8c34)}
+.orb .e{font-size:26px}
+.orb .v{font-family:var(--display);font-size:25px;margin-top:2px}
+.orb .k{font-size:11px;opacity:.95;font-weight:600}
+/* ===== 단계 업 축하 연출 ===== */
+.celebrate.stage{background:linear-gradient(175deg,#d6efff,#fffdf6);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-18px;width:9px;height:14px;border-radius:2px;opacity:.92;animation:fall 2.8s linear forwards}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0)}100%{transform:translateY(760px) rotate(560deg)}}
+.pop{position:relative;animation:popin .7s cubic-bezier(.2,1.5,.45,1)}
+@keyframes popin{0%{transform:scale(0) rotate(-18deg)}70%{transform:scale(1.16)}100%{transform:scale(1)}}
+.stagechar{width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.18));position:relative;z-index:1}
+.glow{position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,210,63,.55),transparent);animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(.9);opacity:.55}50%{transform:scale(1.12);opacity:1}}
+.sparkz{position:absolute;top:-4px;right:-8px;font-size:30px;animation:twinkle 1s ease-in-out infinite;z-index:2}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(0);opacity:1}50%{transform:scale(1.3) rotate(18deg);opacity:.7}}
+.topbanner{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-120%);width:100%;max-width:460px;z-index:90;background:linear-gradient(135deg,#ffd45a,#ffb347);color:#5a3d00;font-family:var(--display);font-size:15px;text-align:center;padding:14px 16px;box-shadow:0 7px 18px rgba(170,120,20,.3);transition:transform .45s cubic-bezier(.2,1.25,.4,1);border-radius:0 0 20px 20px}
+.topbanner.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="preview">
+    <b>🔎 미리보기</b> 역할 전환
+    <div class="seg" id="roleSeg"></div>
+  </div>
+  <div id="root"></div>
+  <div id="overlay"></div>
+</div>
+
+<script>
+/* ============================ 서버 연결 ============================ */
+const API='/api';
+const CHALLENGE_START='2026-11-02';
+function dateOfDay(n){const[y,m,d]=CHALLENGE_START.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+(n-1));return dt.toISOString().slice(0,10);}
+function kstToday(){return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10);}
+const todayN=(()=>{const[y,m,d]=CHALLENGE_START.split('-').map(Number);const s=Date.UTC(y,m-1,d);const[ty,tm,td]=kstToday().split('-').map(Number);const t=Date.UTC(ty,tm-1,td);return Math.max(1,Math.min(28,Math.floor((t-s)/86400000)+1));})();
+function getToken(){return localStorage.getItem('mir_token')||'';}
+function setToken(t){t?localStorage.setItem('mir_token',t):localStorage.removeItem('mir_token');}
+function getAdminTok(){return localStorage.getItem('mir_admin')||'';}
+function setAdminTok(t){t?localStorage.setItem('mir_admin',t):localStorage.removeItem('mir_admin');}
+async function api(path,opts={}){
+  const headers=Object.assign({'content-type':'application/json'},opts.headers||{});
+  if(opts.auth)headers['authorization']='Bearer '+getToken();
+  if(opts.admin)headers['authorization']='Bearer '+getAdminTok();
+  const res=await fetch(API+path,{method:opts.method||'GET',headers,body:opts.body?JSON.stringify(opts.body):undefined});
+  let data={};try{data=await res.json();}catch(e){}
+  if(!res.ok)throw new Error(data.error||('오류 '+res.status));
+  return data;
+}
+const AREA_EMOJI={r:'📖',a:'🎨',s:'⚽'};
+async function loadStats(){const s=await api('/stats');STATS.totalCerts=s.totalCerts;STATS.joinedStudents=s.joined;STATS.rasSplit=s.rasSplit||{r:0,a:0,s:0};STATS.claps=s.claps;STATS.hearts=s.hearts;DB.schoolGoal=s.schoolGoal||1200;}
+async function loadMe(){const me=await api('/me',{method:'POST',auth:true});state.who=me.who||'';DB.myPower=me.power||{r:0,a:0,s:0};state.bonus=me.bonus||0;const done=new Set(me.days||[]);DB.myCal=Array.from({length:28},(_,i)=>({n:i+1,done:done.has(dateOfDay(i+1))}));}
+async function loadGallery(){const g=await api('/gallery');DB.posts=(g.items||[]).map(it=>({id:it.id,area:it.area,who:it.who,txt:it.note||'오늘의 실천',emoji:AREA_EMOJI[it.area]||'✨',photo:it.photo,claps:it.claps||0,hearts:it.hearts||0,cl:false,he:false}));}
+async function syncAll(){await loadStats();if(getToken())await loadMe();await loadGallery();}
+async function loadAdmin(){let totals={};try{const c=await api('/content');totals=c.gradeTotals||{};}catch(e){}let students=[];try{const a=await api('/admin/students',{admin:true});students=a.students||[];}catch(e){}const joined={};for(const s of students)joined[s.grade]=(joined[s.grade]||0)+1;DB.grades=[1,2,3,4,5,6].map(g=>({g,total:totals[g]||totals[String(g)]||0,joined:joined[g]||0}));DB._students=students;}
+function afterNav(view){
+  if(state.role==='student'&&!getToken())return;
+  if(state.role==='student'){
+    if(view==='gallery')loadGallery().then(render).catch(()=>{});
+    else if(view==='home'||view==='stats'||view==='record')loadStats().then(()=>getToken()?loadMe():null).then(render).catch(()=>{});
+  } else if(state.role==='teacher'&&state.teacherAuthed&&(view==='home'||view==='students'||view==='stats'||view==='moderate')){
+    Promise.all([loadStats().catch(()=>{}),loadAdmin().catch(()=>{}),loadGallery().catch(()=>{})]).then(render);
+  }
+}
+
+/* ============================ 샘플 데이터 ============================ */
+const DB = {
+  school:"청미르초등학교",
+  period:"2026. 11. 2 ~ 11. 29",
+  schoolGoal:1200,
+  myPower:{r:0,a:0,s:0},
+  grades:[
+    {g:1, total:95, joined:41},
+    {g:2, total:92, joined:30},
+    {g:3, total:104, joined:71},
+    {g:4, total:99, joined:52},
+    {g:5, total:98, joined:40},
+    {g:6, total:90, joined:33},
+  ],
+  // 나의 28일 달력 (true=인증 완료)
+  myCal: Array.from({length:28},(_,i)=>({n:i+1, done:false})),
+  posts:[],
+  _students:[],
+  books:[
+    {id:1, title:'마당을 나온 암탉', author:'황선미', emoji:'📗', reco:8, reviews:5},
+    {id:2, title:'who? 장영실', author:'오영석', emoji:'📘', reco:5, reviews:2},
+    {id:3, title:'푸른 사자 와니니', author:'이현', emoji:'📙', reco:6, reviews:4},
+    {id:4, title:'해리엇', author:'한윤섭', emoji:'📕', reco:3, reviews:1},
+  ],
+  artworks:[
+    {id:1, title:'폰 대신 책 한 권', emoji:'📚', votes:24},
+    {id:2, title:'우리 가족 저녁시간', emoji:'🍚', votes:31},
+    {id:3, title:'운동장에서 놀자', emoji:'🏃', votes:18},
+    {id:4, title:'스마트폰에게 안녕', emoji:'👋', votes:27},
+  ],
+  notices:[
+    {id:1, date:'2026-11-03', title:'「폰 프리 스쿨」 운영 안내', body:'학생들이 학교생활 중 교육활동과 관련 없는 스마트폰 사용을 줄이고, 그 시간을 독서·예술·스포츠 활동으로 전환하는 「폰 프리 스쿨」을 운영합니다. 가정에서도 취침 전 사용 줄이기, 식사 시간 내려놓기, 가족 대화 시간 갖기 등 함께 실천해 주세요.'},
+    {id:2, date:'2026-11-10', title:'가정 폰프리 실천 주간 안내', body:'11월 둘째 주는 가정 실천 주간입니다. 자녀의 RAS 인증에 응원 한마디를 남겨 주시면 아이들에게 큰 힘이 됩니다.'},
+  ],
+  faq:[
+    {q:'꼭 참여해야 하나요?', a:'자율 참여입니다. 다만 학급·가정이 함께하면 효과가 큽니다.'},
+    {q:'아이 사진·이름이 공개되나요?', a:'공개 화면에는 실명 대신 "3학년 김○○"처럼 가려서 표시되고, 실명·반·번호는 담임 선생님만 볼 수 있습니다.'},
+    {q:'긴급할 때 연락은 어떻게 하나요?', a:'학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다. 보관 중에도 비상 상황은 즉시 해제됩니다.'},
+    {q:'스마트폰은 언제 보관하고 돌려받나요?', a:'등교 시 보관(IN) → 하교 시 반환(OUT)이 기본이며, 비상 상황은 예외로 해제(EMERGENCY)됩니다.'},
+  ],
+  pledges:[
+    '밥 먹을 땐 휴대폰을 내려놓고 얼굴을 보며 도란도란 이야기해요.',
+    '잠자기 전에는 휴대폰을 멀리 두고 포근하게 잠들어요.',
+    '하루 한 번은 휴대폰 없이 가족이 함께 노는 시간을 가져요.',
+    '우리 가족이 함께 정한 휴대폰 사용 시간을 지켜요.',
+    '휴대폰 대신 책·그림·운동으로 즐거운 시간을 찾아봐요.',
+  ],
+  sportsData:{
+    people:[{k:'alone',l:'나 혼자',e:'🙂'},{k:'1',l:'친구 1명',e:'👭'},{k:'few',l:'2~4명',e:'👨‍👩‍👧'},{k:'many',l:'5명 이상',e:'👨‍👩‍👧‍👦'}],
+    place:[{k:'class',l:'교실',e:'🏫'},{k:'yard',l:'운동장',e:'🌳'},{k:'gym',l:'강당',e:'🏀'}],
+    kind:[{k:'run',l:'뛰고 잡기',e:'🏃'},{k:'ball',l:'공으로 놀기',e:'⚽'},{k:'coop',l:'함께 협동',e:'🤝'},{k:'body',l:'표현하고 맞히기',e:'🎭'}],
+    results:{
+      'run':{name:'얼음땡 술래잡기',e:'🧊',how:'술래가 친구를 터치하면 "얼음!" 다른 친구가 터치하면 "땡!" 다시 움직여요.',safe:'부딪히지 않게 거리를 두고 뛰어요.'},
+      'ball':{name:'발야구',e:'⚽',how:'공을 발로 차고 베이스를 돌아요. 수비는 공을 잡아 아웃시켜요.',safe:'세게 차기보다 정확히 차요.'},
+      'coop':{name:'협동 훌라후프 옮기기',e:'🔄',how:'손을 잡은 채 훌라후프를 몸으로 통과시켜 옆으로 전달해요.',safe:'손을 놓지 않고 천천히 움직여요.'},
+      'body':{name:'몸으로 말해요',e:'🎭',how:'한 친구가 몸짓으로 단어를 표현하면 다른 친구가 맞혀요.',safe:'넓은 공간에서 안전하게 움직여요.'},
+    }
+  },
+  // 공용 태블릿: 교실 명단(간단)
+  rosterNames:['김하준','이서윤','박도윤','최지우','정시우','강하린','윤예준','임서아']
+};
+
+/* 통계용 파생 수치 */
+const STATS = {
+  totalCerts: 874, joinedStudents: 267, practiceDays: 921, claps: 402, hearts: 351,
+  last14:[0,0,96,110,132,107,97,59,57,40,77,68,31,42].map((v,i)=>({d:(29+i)>31?`11.${String(i-2).padStart(2,'0')}`:`10.${29+i}`, v})),
+  rasSplit:{r:346,a:209,s:319},
+  byDow:[{l:'월',v:136},{l:'화',v:187},{l:'수',v:200},{l:'목',v:138},{l:'금',v:97},{l:'토',v:59},{l:'일',v:57}],
+  top:[
+    {nm:'3학년 김○○', c:10, d:8},{nm:'3학년 박○○', c:10, d:8},{nm:'4학년 이○○', c:9, d:8},
+    {nm:'3학년 정○○', c:9, d:7},{nm:'5학년 오○○', c:8, d:7},
+  ],
+  byGrade:[
+    {g:1,r:34,a:20,s:19},{g:2,r:32,a:12,s:10},{g:3,r:150,a:93,s:154},
+    {g:4,r:85,a:63,s:82},{g:5,r:38,a:15,s:50},{g:6,r:7,a:6,s:4},
+  ]
+};
+
+/* ============================ 상태 & 유틸 ============================ */
+const state = {
+  role:'student',      // student | parent | teacher | kiosk
+  view:'home',
+  teacherAuthed:false,
+  galFilter:'all',
+  pledged:[false,false,false,false,false],
+  parentPledged:false,
+  bonus:0,
+  who:'',
+};
+const ROLES=[['student','🧒 학생'],['parent','👨‍👩‍👧 학부모'],['teacher','🧑‍🏫 교사'],['kiosk','📟 공용태블릿']];
+const el = id => document.getElementById(id);
+const h = (strings,...v)=>strings.map((s,i)=>s+(v[i]??'')).join('');
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function go(view){state.view=view;render();afterNav(view);el('root').querySelector('.screen')?.scrollTo(0,0)}
+function setRole(r){state.role=r;state.view=(r==='teacher'&&!state.teacherAuthed)?'login':'home';render();afterNav(state.view)}
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  el('app').appendChild(t);setTimeout(()=>t.remove(),1800);
+}
+function overlay(html){el('overlay').innerHTML=html}
+function closeOverlay(){el('overlay').innerHTML=''}
+function celebrate(title,sub,emoji){
+  overlay(h`<div class="celebrate" onclick="closeOverlay()">
+    <div><div class="big">${emoji||'🎉'}</div><h3>${title}</h3><p class="muted">${sub||'화면을 누르면 닫혀요'}</p></div></div>`);
+  setTimeout(closeOverlay,2200);
+}
+function pctOf(g){return g.total?Math.round(g.joined/g.total*100):0}
+
+/* 파생: 나의 인증 일수 */
+function myDone(){return DB.myCal.filter(d=>d.done).length}
+
+/* ============================ 역할별 탭 ============================ */
+const TABS={
+  student:[['home','🏠','홈'],['zone','💪','힘키우기'],['gallery','🌟','자랑터'],['stats','☁️','모아보기'],['record','📅','기록']],
+  parent:[['home','🏠','홈'],['family','🏡','가정실천'],['cheer','💬','응원']],
+  teacher:[['home','📈','현황'],['students','🧑‍🎓','학생'],['moderate','📝','게시글'],['zoneadmin','💪','힘키우기'],['content','🎨','콘텐츠']],
+};
+
+/* ============================ 렌더 ============================ */
+function render(){
+  // role seg
+  el('roleSeg').innerHTML=ROLES.map(([k,l])=>`<button class="${state.role===k?'on':''}" onclick="setRole('${k}')">${l}</button>`).join('');
+  if(state.role==='kiosk'){ el('root').innerHTML=viewKiosk(); return; }
+
+  const roleLabel={student:'학생',parent:'학부모',teacher:'교사'}[state.role];
+  const tabs=TABS[state.role]||[];
+  const studentGate = state.role==='student' && !getToken();
+  const teacherGate = state.role==='teacher' && !state.teacherAuthed;
+  let body;
+  if(studentGate) body=VIEWS['student:login']();
+  else if(teacherGate) body=VIEWS['teacher:login']();
+  else body = VIEWS[state.role+':'+state.view] ? VIEWS[state.role+':'+state.view]() :
+               (VIEWS[state.role+':home']?VIEWS[state.role+':home']():'<div class="screen"></div>');
+  const showTabs = !teacherGate && !studentGate;
+  el('root').innerHTML = h`
+    <div class="topbar">
+      <div class="brand"><img class="mark" src="mascot.svg" alt="청미르 마스코트"><span>청미르 RAS<small>폰 OFF &amp; RAS ON</small></span></div>
+      ${state.role==='teacher'?`<button class="phoneoff" onclick="setRole('kiosk')" style="border:0;cursor:pointer">📟 공용태블릿</button>`:`<span class="phoneoff">📵 폰프리</span>`}
+      <span class="rolechip">${roleLabel}</span>
+    </div>
+    ${body}
+    ${showTabs?`<div class="tabbar">${tabs.map(([v,i,l])=>`<button class="${state.view===v?'on':''}" onclick="go('${v}')"><span class="i">${i}</span>${l}</button>`).join('')}</div>`:''}
+  `;
+}
+
+const VIEWS={};
+
+/* ======= 학생: 선언/로그인 ======= */
+VIEWS['student:login']=()=>h`<div class="screen">
+  <div class="card hero sky" style="color:var(--ink)">
+    <span class="cloud c1"></span><span class="cloud c2"></span>
+    <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
+    <h1 style="color:#1b6aa5">폰 프리 선언하고<br>미르랑 시작해요!</h1>
+    <p style="color:#3a6b8a">학년·반·번호와 비밀번호로 들어와요.</p>
+  </div>
+  <div class="card">
+    <div class="stepgrid" style="margin-bottom:12px">
+      <div><div class="lab" style="font-size:12px;color:var(--sub);font-weight:700;text-align:center;margin-bottom:4px">학년</div><input id="dg" type="number" inputmode="numeric" min="1" max="6" value="3" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px;text-align:center;font-size:17px"></div>
+      <div><div class="lab" style="font-size:12px;color:var(--sub);font-weight:700;text-align:center;margin-bottom:4px">반</div><input id="dr" type="number" inputmode="numeric" min="1" value="1" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px;text-align:center;font-size:17px"></div>
+      <div><div class="lab" style="font-size:12px;color:var(--sub);font-weight:700;text-align:center;margin-bottom:4px">번호</div><input id="dn" type="number" inputmode="numeric" min="1" value="1" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px;text-align:center;font-size:17px"></div>
+    </div>
+    <div class="field"><label>이름</label><input id="dname" placeholder="내 이름" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px"></div>
+    <div class="field"><label>비밀번호 (숫자 4자리 이상)</label><input id="dpw" type="password" inputmode="numeric" placeholder="나만 아는 비밀번호" style="width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px"></div>
+    <button class="btn p" onclick="doDeclare()">🐉 폰 프리 선언하고 시작하기</button>
+    <div class="hint">처음이면 새로 선언돼요. 다음부터는 같은 정보로 들어올 수 있어요.</div>
+  </div>
+</div>`;
+async function doDeclare(){
+  const grade=+el('dg').value, room=+el('dr').value, number=+el('dn').value;
+  const name=(el('dname').value||'').trim(), password=(el('dpw').value||'');
+  if(!name){toast('이름을 입력해 주세요');return;}
+  if(password.length<4){toast('비밀번호는 4자리 이상이에요');return;}
+  try{ const r=await api('/declare',{method:'POST',body:{grade,room,number,name,password}}); setToken(r.token); state.who=r.who; }
+  catch(e){ toast(e.message||'선언하지 못했어요'); return; }
+  try{ await syncAll(); }catch(e){}
+  lastStageIdx=mirStage().i;
+  state.view='home'; render();
+  celebrate('선언 완료! 🐉','미르랑 함께 시작해요','🎉');
+}
+function logout(){ setToken(''); setAdminTok(''); state.teacherAuthed=false; state.who=''; location.reload(); }
+
+/* ======= 학생: 홈 ======= */
+function powerRow(mp){
+  const pw=(k,L,e,nm,sub)=>`<div class="pw ${k}"><div class="ic" style="font-family:var(--display);font-size:20px">${L}</div>
+     <div style="flex:1"><div class="nm">${nm}<small>${e} ${sub}</small></div>
+       <div class="bar"><div class="fill" style="width:${Math.min(100,mp[k]*12)}%"></div></div></div>
+     <div class="v">${mp[k]}</div></div>`;
+  return `<div class="power">${pw('r','R','📖','생각의 힘','Reading')}${pw('a','A','🎨','감성의 힘','Arts')}${pw('s','S','⚽','몸의 힘','Sports')}</div>`;
+}
+const MIR_STAGES=[
+  {min:0,    name:'미르 알',   img:'mir-egg.svg'},
+  {min:300,  name:'아기 미르', img:'mir-baby.svg'},
+  {min:700,  name:'미르',      img:'mascot.svg'},
+  {min:1100, name:'큰 미르',   img:'mir-big.svg'},
+];
+function mirStage(){
+  const cur=STATS.totalCerts; let i=0;
+  MIR_STAGES.forEach((s,j)=>{ if(cur>=s.min) i=j; });
+  const next=MIR_STAGES[i+1];
+  const pct=next?Math.round((cur-MIR_STAGES[i].min)/(next.min-MIR_STAGES[i].min)*100):100;
+  return {i,stage:MIR_STAGES[i],next,pct,cur};
+}
+function growthCard(){
+  const g=mirStage();
+  const vis = `<img src="${g.stage.img}" alt="${g.stage.name}" style="width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 5px 7px rgba(0,0,0,.12))">`;
+  const chk=MIR_STAGES.map((s,idx)=>`<div style="flex:1;text-align:center;opacity:${idx<=g.i?1:.42}">
+     <img src="${s.img}" alt="${s.name}" style="width:${idx===g.i?44:30}px;height:${idx===g.i?44:30}px;object-fit:contain">
+     <div style="font-size:9.5px;color:var(--sub);font-weight:${idx===g.i?800:500};margin-top:1px">${s.name}</div></div>`).join('<div style="align-self:center;color:#cfe7f5">›</div>');
+  const bar = g.next
+    ? `<div style="height:12px;background:#eef0ea;border-radius:999px;overflow:hidden"><div style="height:100%;width:${g.pct}%;background:linear-gradient(90deg,#9bd8f7,var(--sky));border-radius:999px;transition:width .6s"></div></div>
+       <div class="muted center" style="margin-top:7px">청미르 친구들이 함께 <b>${g.cur}</b>번 실천 · <b>${g.next.name}</b>까지 <b>${g.next.min-g.cur}</b>번! (${g.pct}%)</div>`
+    : `<div class="muted center" style="margin-top:7px">미르가 다 자랐어요! 함께 ${g.cur}번 실천했어요 🎉</div>`;
+  return `<div style="text-align:center;margin-bottom:10px">${vis}
+      <div style="font-family:var(--display);font-size:17px;margin-top:2px">지금은 '${g.stage.name}' 단계예요</div></div>
+    <div style="display:flex;align-items:flex-start;gap:3px;margin-bottom:11px">${chk}</div>
+    ${bar}
+    <div class="center" style="margin-top:12px"><button class="iconbtn" onclick="demoStageUp()">🎬 단계 업 축하 연출 보기</button></div>`;
+}
+/* 단계 업 감지 & 축하 연출 */
+let lastStageIdx=null;
+function stageWentUp(){ const now=mirStage().i; const up=(lastStageIdx!==null && now>lastStageIdx); lastStageIdx=now; return up?now:-1; }
+const CONFETTI_COLORS=['#86c541','#ef79ac','#f6a24a','#3aa7ef','#ffd23f'];
+function topBanner(text){
+  const old=el('app').querySelector('.topbanner'); if(old)old.remove();
+  const bn=document.createElement('div'); bn.className='topbanner'; bn.innerHTML=text;
+  el('app').appendChild(bn);
+  requestAnimationFrame(()=>bn.classList.add('show'));
+  setTimeout(()=>{ bn.classList.remove('show'); setTimeout(()=>bn.remove(),450); },3200);
+}
+function celebrateStage(idx){
+  const s=MIR_STAGES[idx];
+  topBanner(`🎉 미르가 '${s.name}' 단계로 자랐어요!`);
+  const conf=Array.from({length:28},()=>{
+    const x=Math.round(Math.random()*100), d=(Math.random()*1.2).toFixed(2),
+      c=CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)],
+      w=6+Math.round(Math.random()*6);
+    return `<i style="left:${x}%;width:${w}px;background:${c};animation-delay:${d}s"></i>`;
+  }).join('');
+  overlay(`<div class="celebrate stage" onclick="closeOverlay()">
+    <div class="confetti">${conf}</div>
+    <div style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);padding:0 24px">
+      <div class="pop" style="display:inline-block"><div class="glow"></div><img src="${s.img}" class="stagechar" alt="${s.name}"><span class="sparkz">✨</span></div>
+      <h3>🎉 미르가 자랐어요!</h3>
+      <p class="muted">이제 <b style="color:var(--sky)">'${s.name}'</b> 단계예요</p>
+      <button class="btn p" style="max-width:220px;margin:14px auto 0" onclick="event.stopPropagation();closeOverlay()">좋아요! 🙌</button>
+    </div>
+  </div>`);
+  setTimeout(()=>{ if(document.querySelector('.celebrate.stage')) closeOverlay(); },5000);
+}
+function demoStageUp(){
+  const g=mirStage();
+  if(g.next){ STATS.totalCerts=g.next.min; lastStageIdx=g.i+1; celebrateStage(g.i+1); }
+  else { celebrateStage(g.i); }
+  setTimeout(render,120);
+}
+VIEWS['student:home']=()=>{
+  const done=myDone();
+  const calMini=DB.myCal.slice(0,14).map(d=>`<div class="d ${d.done?'done':''} ${d.n>todayN?'future':''} ${d.n===todayN?'today':''}"><span class="n">${d.n}</span></div>`).join('');
+  return h`<div class="screen">
+    <div class="card hero sky" style="color:var(--ink)">
+      <span class="cloud c1"></span><span class="cloud c2"></span>
+      <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
+      <span class="big" style="background:#fff;color:var(--sky)">${todayN}일차 · 폰 OFF 🐉</span>
+      <h1 style="color:#1b6aa5">미르랑 오늘도<br>세 가지 힘 키우기!</h1>
+      <p style="color:#3a6b8a">책·그림·운동 중 하나를 골라 힘을 키워요.</p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+        <div style="font-weight:800;font-size:15px">🐉 나의 세 가지 힘</div>
+        <div style="display:flex;gap:6px">
+          <span class="pill" style="background:#fff3d6;color:#a7791a">⭐ ${state.bonus}</span>
+          <span class="pill" style="background:var(--r-soft);color:#1c7a50">🔥 ${done}일</span>
+        </div>
+      </div>
+      ${powerRow(DB.myPower)}
+      <div class="spacer"></div>
+      <button class="btn p" onclick="openCertify()">✨ 오늘의 힘 키우기</button>
+    </div>
+
+    <h2 class="sec">🐉 함께 키우는 미르</h2>
+    <div class="card">${growthCard()}</div>
+
+    <h2 class="sec">📅 미르랑 28일</h2>
+    <div class="card">
+      <div class="cal">${calMini}</div>
+      <div class="muted center" style="margin-top:9px">매일 하나씩, 오늘의 칸을 예쁘게 채워 봐요 🌱</div>
+      <div class="spacer"></div>
+      <button class="btn g" onclick="go('record')">전체 달력 보기 →</button>
+    </div>
+
+    <div class="schoolmark">
+      <img src="logo.png" alt="청미르초등학교 교표">
+      <div><b>청미르초등학교</b><small>CHEONGMIREU ELEMENTARY SCHOOL</small></div>
+    </div>
+  </div>`;
+};
+
+/* ======= 학생: 인증 시트 ======= */
+let certArea=null, certPhoto=null;
+function certPhotoPick(ev){ const f=ev.target.files&&ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{certPhoto=r.result; const pv=el('certPhotoPrev'); if(pv)pv.innerHTML=`<img class="photo-thumb" style="margin-top:8px" src="${certPhoto}">`; const b=el('certPhotoBtn'); if(b)b.innerHTML='📷 사진 변경 <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none">';}; r.readAsDataURL(f); }
+function openCertify(){
+  certArea=null; certPhoto=null;
+  overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
+    <div class="sheet"><button class="x" onclick="closeOverlay()">✕</button>
+      <h3>✨ 오늘의 힘 키우기</h3>
+      <p class="muted" style="margin:-4px 0 14px">어떤 힘을 키웠는지 골라 주세요.</p>
+      <div class="seg3" id="certSeg">
+        <div class="opt r" onclick="pickArea('r')"><span class="e">📖</span>생각의 힘<br><span style="font-size:11px;color:var(--sub)">독서</span></div>
+        <div class="opt a" onclick="pickArea('a')"><span class="e">🎨</span>감성의 힘<br><span style="font-size:11px;color:var(--sub)">예술</span></div>
+        <div class="opt s" onclick="pickArea('s')"><span class="e">⚽</span>몸의 힘<br><span style="font-size:11px;color:var(--sub)">스포츠</span></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>오늘의 한마디</label>
+        <textarea id="certTxt" placeholder="예: 『해리엇』을 읽고 거북이가 궁금해졌어요"></textarea></div>
+      <div class="field"><label>사진 (선택)</label>
+        <label class="btn ghost" style="cursor:pointer" id="certPhotoBtn">📷 사진 찍기·올리기
+          <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none"></label>
+        <div id="certPhotoPrev"></div>
+        <div class="hint">얼굴·이름표가 보이지 않게 찍어 주세요.</div></div>
+      <button class="btn p" onclick="submitCert()">인증 완료하기</button>
+    </div></div>`);
+}
+function pickArea(a){certArea=a;document.querySelectorAll('#certSeg .opt').forEach(o=>o.classList.remove('on'));document.querySelector('#certSeg .opt.'+a).classList.add('on')}
+async function submitCert(){
+  if(!certArea){toast('활동을 골라 주세요 🙂');return;}
+  const note=(el('certTxt').value||'').trim();
+  const pn={r:'생각',a:'감성',s:'몸'}[certArea];
+  try{ await api('/certify',{method:'POST',auth:true,body:{area:certArea,note}}); }
+  catch(e){ toast(e.message||'저장하지 못했어요'); return; }
+  closeOverlay();
+  try{ await syncAll(); }catch(e){}
+  const up=stageWentUp();
+  if(up>=0){ celebrateStage(up); } else { celebrate(`${pn}의 힘 +1! 🐉`,'미르가 조금 더 자랐어요','✨'); }
+  render();
+}
+/* ======= 학생: 라스존 ======= */
+VIEWS['student:zone']=()=>h`<div class="screen">
+  <div class="card hero sky" style="color:var(--ink)">
+    <span class="cloud c1"></span><span class="cloud c2"></span>
+    <h1 style="color:#1b6aa5">세 가지 힘 키우기</h1>
+    <p style="color:#3a6b8a">휴대폰은 잠시 내려놓고,<br>오늘은 어떤 힘을 키워 볼까요?</p>
+  </div>
+  <div class="zone r" onclick="go('zone_r')"><div class="ic">📖</div><div><div class="t">생각의 힘</div><div class="d">책을 읽고 생각을 나눠요 · 독서</div></div><span class="chev">›</span></div>
+  <div class="zone a" onclick="go('zone_a')"><div class="ic">🎨</div><div><div class="t">감성의 힘</div><div class="d">그리고 만들고 표현해요 · 예술</div></div><span class="chev">›</span></div>
+  <div class="zone s" onclick="go('zone_s')"><div class="ic">⚽</div><div><div class="t">몸의 힘</div><div class="d">몸을 움직이며 신나게 놀아요 · 스포츠</div></div><span class="chev">›</span></div>
+  <div class="callout" style="margin-top:4px">💡 <b>책마루</b>와 <b>RAS 학교갤러리</b>에서 인증하면 보너스 점수를 받아요!</div>
+</div>`;
+
+VIEWS['student:zone_r']=()=>{
+  const list=DB.books.map(b=>h`<div class="lrow"><div class="av">${b.emoji}</div>
+    <div style="flex:1"><div class="nm">${esc(b.title)}</div><div class="sb">${esc(b.author)} · 추천 ${b.reco} · 감상평 ${b.reviews}</div></div>
+    <button class="iconbtn" onclick="toast('감상평 화면이 열립니다 (프로토타입)')">감상평</button></div>`).join('');
+  return h`<div class="screen">
+    <button class="btn g sm" onclick="go('zone')">← 힘키우기</button>
+    <h2 class="sec">📖 생각의 힘 · 독서</h2>
+    <p class="muted" style="margin-top:-4px">친구들이 추천한 책을 읽고, 나도 좋은 책을 추천해 봐요.</p>
+    <div class="card tight" style="background:var(--r-soft);border-color:#bfe6cd">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="font-size:30px">🏫</div>
+        <div style="flex:1"><div style="font-weight:800;color:#1c7a50">책마루에서 읽으면 +2점! 🌟</div>
+          <div class="muted">학교 안 <b>책마루</b>에서 책을 읽고 인증하면 보너스 점수를 받아요.</div></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn r" onclick="bonusCheck('책마루')">📚 책마루에서 읽었어요</button>
+    </div>
+    <div class="card">${list}</div>
+    <button class="btn r" onclick="toast('책 추천 작성 화면이 열립니다 (프로토타입)')">+ 책 추천하기</button>
+  </div>`;
+};
+
+let voteSel=null;
+VIEWS['student:zone_a']=()=>{
+  const grid=DB.artworks.map(w=>h`<div class="post" onclick="pickVote(${w.id})" id="aw${w.id}" style="${voteSel===w.id?'outline:3px solid var(--a);outline-offset:1px':''}">
+    <div class="ph" style="background:var(--a-soft)">${w.emoji}</div>
+    <div class="meta"><div class="txt" style="font-weight:700">${esc(w.title)}</div>
+    <div class="who">👍 ${w.votes}표</div></div></div>`).join('');
+  return h`<div class="screen">
+    <button class="btn g sm" onclick="go('zone')">← 힘키우기</button>
+    <h2 class="sec">🎨 감성의 힘 · 예술</h2>
+    <p class="muted" style="margin-top:-4px">마음에 드는 작품을 골라 투표해요. (1인 최대 3표)</p>
+    <div class="card tight" style="background:var(--a-soft);border-color:#e0cff5">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="font-size:30px">🖼️</div>
+        <div style="flex:1"><div style="font-weight:800;color:#6b3fa8">RAS 학교갤러리에서 활동하면 +2점! 🌟</div>
+          <div class="muted"><b>RAS 학교갤러리</b>(예술작품이 전시될 공간)에서 감상·활동을 인증하면 보너스 점수를 받아요.</div></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn a" onclick="bonusCheck('RAS 학교갤러리')">🎨 학교갤러리에서 활동했어요</button>
+    </div>
+    <div class="gal">${grid}</div>
+    <div class="spacer"></div>
+    <button class="btn a" onclick="submitVote()">${voteSel?'이 작품에 투표하기':'작품을 먼저 골라 주세요'}</button>
+  </div>`;
+};
+function pickVote(id){voteSel=id;render()}
+async function bonusCheck(place){ try{ const r=await api('/bonus',{method:'POST',auth:true,body:{place}}); state.bonus=r.bonus; }catch(e){ toast(e.message||'저장 실패'); return; } celebrate('+2 보너스 점수! 🌟', place+'에서 실천했어요'); setTimeout(render,2200); }
+function submitVote(){if(!voteSel){toast('작품을 먼저 골라 주세요');return;}const w=DB.artworks.find(a=>a.id===voteSel);w.votes++;voteSel=null;celebrate('투표 완료!','소중한 한 표 고마워요','🗳️');setTimeout(render,2200)}
+
+/* 스포츠존 3단계 위저드 */
+const sp={step:0,people:null,place:null,kind:null};
+VIEWS['student:zone_s']=()=>{
+  if(sp.step>=3) return sportsResult();
+  const defs=[['people','함께 놀 친구는 몇 명이에요?'],['place','어디에서 놀아요?'],['kind','어떤 놀이가 좋아요?']][sp.step];
+  const opts=DB.sportsData[defs[0]].map(o=>h`<div class="opt-card ${sp[defs[0]]===o.k?'on':''}" onclick="spPick('${defs[0]}','${o.k}')"><span class="e">${o.e}</span><span>${o.l}</span></div>`).join('');
+  return h`<div class="screen">
+    <button class="btn g sm" onclick="${sp.step===0?"go('zone')":'spBack()'}">← ${sp.step===0?'힘키우기':'이전'}</button>
+    <h2 class="sec">⚽ 몸의 힘 · 스포츠</h2>
+    <div class="steps">${[0,1,2].map(i=>`<i class="${i<=sp.step?'on':''}"></i>`).join('')}</div>
+    <p class="kicker">${sp.step+1} / 3 단계</p>
+    <h2 class="sec" style="margin-top:4px">${defs[1]}</h2>
+    ${opts}
+  </div>`;
+};
+function spPick(key,val){sp[key]=val;setTimeout(()=>{sp.step++;render()},180)}
+function spBack(){sp.step=Math.max(0,sp.step-1);render()}
+function sportsResult(){
+  const r=DB.sportsData.results[sp.kind]||DB.sportsData.results.run;
+  return h`<div class="screen">
+    <button class="btn g sm" onclick="spReset()">← 다시 고르기</button>
+    <h2 class="sec">🎯 추천 놀이를 찾았어요!</h2>
+    <div class="card" style="text-align:center">
+      <div style="font-size:64px">${r.e}</div>
+      <div style="font-family:var(--display);font-size:22px;margin:4px 0">${r.name}</div>
+      <span class="pill">준비물 없이 바로!</span>
+    </div>
+    <div class="card"><div style="font-weight:800;margin-bottom:6px">🙌 이렇게 놀아요</div><p class="muted" style="margin:0">${r.how}</p></div>
+    <div class="callout warn">⚠️ 꼭 지켜요! ${r.safe}</div>
+    <button class="btn s" onclick="toast('소감 작성 화면이 열립니다 (프로토타입)')">다 놀았어요 · 소감 남기기</button>
+  </div>`;
+}
+function spReset(){sp.step=0;sp.people=sp.place=sp.kind=null;render()}
+
+/* ======= 학생: 갤러리 ======= */
+VIEWS['student:gallery']=()=>{
+  const f=state.galFilter;
+  const items=DB.posts.filter(p=>f==='all'||p.area===f);
+  const areaName={r:'생각',a:'감성',s:'몸'};
+  const grid=items.map(p=>h`<div class="post">
+    <div class="ph" style="background:var(--${p.area}-soft);${p.photo?`background-image:url(${p.photo});background-size:cover;background-position:center`:''}">${p.photo?'':p.emoji}</div>
+    <div class="meta"><span class="tag ${p.area}">${areaName[p.area]}</span>
+      <div class="txt">${esc(p.txt)}</div><div class="who">${esc(p.who)}</div>
+      <div class="react" style="margin-top:7px">
+        <button class="${p.cl?'on':''}" onclick="clap(${p.id})">👏 ${p.claps}</button>
+        <button class="${p.he?'on':''}" onclick="heart(${p.id})">❤️ ${p.hearts}</button>
+      </div></div></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec">🌟 자랑터</h2>
+    <p class="muted" style="margin-top:-4px">친구들이 키운 힘을 구경하고 응원을 보내요.</p>
+    <div class="chips">
+      ${[['all','전체'],['r','📖 생각'],['a','🎨 감성'],['s','⚽ 몸']].map(([k,l])=>`<div class="chip ${f===k?'on':''}" onclick="state.galFilter='${k}';render()">${l}</div>`).join('')}
+    </div>
+    ${items.length?`<div class="gal">${grid}</div>`:'<div class="emptyish"><span class="e">🌱</span>아직 인증이 없어요.<br>첫 번째 주인공이 되어 주세요!</div>'}
+  </div>`;
+};
+async function clap(id){try{const r=await api('/react',{method:'POST',auth:true,body:{certId:id,kind:'clap'}});const p=DB.posts.find(x=>x.id===id);if(p){p.claps=r.count;p.cl=r.on;}render();}catch(e){toast(e.message||'로그인이 필요해요');}}
+async function heart(id){try{const r=await api('/react',{method:'POST',auth:true,body:{certId:id,kind:'heart'}});const p=DB.posts.find(x=>x.id===id);if(p){p.hearts=r.count;p.he=r.on;}render();}catch(e){toast(e.message||'로그인이 필요해요');}}
+
+/* ======= 학생: 모아보기 (공동·성장 중심) ======= */
+VIEWS['student:stats']=()=>{
+  const s=STATS.rasSplit;
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">🐉 우리가 함께 키운 힘</h2>
+    <p class="muted" style="margin-top:-4px">${DB.period} 동안 청미르 친구들이 모은 세 가지 힘이에요.</p>
+    <div class="powerorbs">
+      <div class="orb r"><div class="e">📖</div><div class="v">${s.r}</div><div class="k">R · 생각의 힘</div></div>
+      <div class="orb a"><div class="e">🎨</div><div class="v">${s.a}</div><div class="k">A · 감성의 힘</div></div>
+      <div class="orb s"><div class="e">⚽</div><div class="v">${s.s}</div><div class="k">S · 몸의 힘</div></div>
+    </div>
+
+    <h2 class="sec">🐉 함께 키우는 미르</h2>
+    <div class="card">${growthCard()}</div>
+
+    <h2 class="sec">🤝 함께한 친구들</h2>
+    <div class="tiles">
+      <div class="tile accent"><div class="v">${STATS.joinedStudents}</div><div class="k">함께한 친구</div></div>
+      <div class="tile accent"><div class="v">${STATS.claps+STATS.hearts}</div><div class="k">주고받은 응원 👏❤️</div></div>
+    </div>
+
+    <div class="callout">🌈 순위 경쟁 대신, 우리 모두 함께 미르를 키워요! 나의 속도로 꾸준한 게 가장 멋져요.</div>
+  </div>`;
+};
+
+/* ======= 교사: 운영 통계 (데이터) ======= */
+function teacherStats(){
+  const max=Math.max(...STATS.last14.map(d=>d.v));
+  const bars=STATS.last14.map(d=>`<div class="b"><div class="bar" style="height:${d.v/max*100}%"></div><div class="bl">${d.d.slice(3)}</div></div>`).join('');
+  const tot=STATS.rasSplit.r+STATS.rasSplit.a+STATS.rasSplit.s;
+  const gtrack=DB.grades.map(g=>`<div class="lane"><span class="lab">${g.g}학년</span><div class="bar"><div class="fill" style="width:${pctOf(g)}%"></div></div><span class="pct">${g.joined}명</span></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">📊 운영 통계</h2>
+    <p class="muted" style="margin-top:-4px">${DB.period} · 활동 날짜 기준</p>
+    <div class="tiles">
+      <div class="tile accent"><div class="v">${STATS.totalCerts}</div><div class="k">누적 인증</div></div>
+      <div class="tile accent"><div class="v">${STATS.joinedStudents}</div><div class="k">참여 학생</div></div>
+    </div>
+    <h2 class="sec">📈 최근 2주 실천 흐름</h2>
+    <div class="card"><div class="bars">${bars}</div></div>
+    <h2 class="sec">⚖️ 세 가지 힘 균형</h2>
+    <div class="card">
+      <div class="split">
+        <i style="width:${s_pct(STATS.rasSplit.r,tot)}%;background:var(--r)"></i>
+        <i style="width:${s_pct(STATS.rasSplit.a,tot)}%;background:var(--a)"></i>
+        <i style="width:${s_pct(STATS.rasSplit.s,tot)}%;background:var(--s)"></i>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--r)"></i>생각 ${STATS.rasSplit.r}</span>
+        <span><i class="dot" style="background:var(--a)"></i>감성 ${STATS.rasSplit.a}</span>
+        <span><i class="dot" style="background:var(--s)"></i>몸 ${STATS.rasSplit.s}</span>
+      </div>
+    </div>
+    <h2 class="sec">👨‍👩‍👧 학년별 참여</h2>
+    <div class="card"><div class="track">${gtrack}</div></div>
+  </div>`;
+}
+function s_pct(v,t){return t?v/t*100:0}
+
+/* ======= 학생: 실천 기록지 ======= */
+VIEWS['student:record']=()=>{
+  const dow=['일','월','화','수','목','금','토'];
+  const head=dow.map(d=>`<span>${d}</span>`).join('');
+  // 11/2(일) 시작 가정 → 첫 칸 일요일
+  const cells=DB.myCal.map(d=>`<div class="d ${d.done?'done':''} ${d.n>todayN?'future':''} ${d.n===todayN?'today':''}" onclick="${d.n<=todayN?`dayTap(${d.n})`:"toast('아직 오지 않은 날짜예요 🌙')"}"><span class="n">${d.n}</span></div>`).join('');
+  const done=myDone();
+  return h`<div class="screen">
+    <h2 class="sec">📅 폰프리 28일 실천 기록지</h2>
+    <div class="card tight" style="display:flex;gap:12px;align-items:center">
+      <div style="flex:none;width:56px;height:56px;border-radius:16px;background:var(--sky-soft);display:grid;place-items:center;font-family:var(--display);color:#1b73b3;font-size:20px">${done}일</div>
+      <div class="muted">지금까지 <b>${done}일</b> 실천했어요. 오늘 날짜를 눌러 기록해요. 지난 날짜도 수정할 수 있어요.</div>
+    </div>
+    <div class="card">
+      <div class="cdow">${head}</div>
+      <div class="cal">${cells}</div>
+    </div>
+    <div class="callout">💛 지난 날짜도 눌러서 채울 수 있어요. 나의 속도로, 꾸준히 해봐요!</div>
+  </div>`;
+};
+function dayTap(n){
+  const d=DB.myCal.find(x=>x.n===n);
+  overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
+    <div class="sheet"><button class="x" onclick="closeOverlay()">✕</button>
+    <h3>📅 ${n}일차 기록</h3>
+    <div class="field"><label>오늘의 목표 도달도</label>
+      <select id="recGoal"><option>잘 지켰어요 😄</option><option>부분 실천 🙂</option><option>다시 시작 💪</option></select></div>
+    <div class="field"><label>오늘 휴대폰 사용 시간 (선택)</label><input id="recTime" placeholder="예: 30분"></div>
+    <div class="field"><label>오늘의 한마디 (선택)</label><textarea id="recNote" placeholder="어려웠던 점이나 다시 시작한 마음도 좋아요"></textarea></div>
+    <button class="btn p" onclick="(function(){DB.myCal.find(x=>x.n===${n}).done=true;closeOverlay();celebrate('기록 저장!','${n}일차 실천을 기록했어요','✅');setTimeout(render,2200)})()">저장하기</button>
+    </div></div>`);
+}
+/* ======= 학부모 ======= */
+VIEWS['parent:home']=()=>h`<div class="screen">
+  <div class="card hero" style="background:linear-gradient(135deg,#27ae75,#5bd0a0 55%,#3aa7ef)">
+    <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
+    <h1>학부모님,<br>함께해 주세요</h1>
+    <p>가정에서의 작은 실천이 아이의 폰프리 습관을 만듭니다.</p>
+  </div>
+  <div class="card tight" onclick="go('family')" style="cursor:pointer;display:flex;gap:12px;align-items:center">
+    <div class="zone s" style="margin:0;padding:0;background:none"><div class="ic">📝</div></div>
+    <div style="flex:1"><div style="font-weight:800">가정 폰프리 서약 동참</div><div class="muted">${state.parentPledged?'참여 완료! 고맙습니다 💚':'우리 가족 수칙에 함께해요'}</div></div><span class="chev">›</span>
+  </div>
+  <div class="card tight" onclick="go('cheer')" style="cursor:pointer;display:flex;gap:12px;align-items:center">
+    <div class="zone a" style="margin:0;padding:0;background:none"><div class="ic">💬</div></div>
+    <div style="flex:1"><div style="font-weight:800">자녀 응원 한마디</div><div class="muted">아이의 실천에 힘을 보태 주세요</div></div><span class="chev">›</span>
+  </div>
+  <div class="callout">📵 등교 보관(IN) → 하교 반환(OUT) → 비상 해제(EMERGENCY). 긴급 시 학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다.</div>
+</div>`;
+
+VIEWS['parent:family']=()=>{
+  const items=DB.pledges.map((p,i)=>h`<div class="opt-card ${state.pledged[i]?'on':''}" onclick="togglePledge(${i})">
+    <span class="e">${state.pledged[i]?'✅':'⬜'}</span><span>${esc(p)}</span></div>`).join('');
+  const n=state.pledged.filter(Boolean).length;
+  return h`<div class="screen">
+    <h2 class="sec">📝 우리 가족 폰프리 서약</h2>
+    <p class="muted" style="margin-top:-4px">가정에서 함께 지킬 약속을 골라 주세요.</p>
+    <div class="card">
+      ${items}
+      <div class="divider"></div>
+      <div class="center muted">선택한 약속 <b style="color:var(--r)">${n}/${DB.pledges.length}</b></div>
+      <div class="spacer"></div>
+      <button class="btn ${state.parentPledged?'g':'p'}" onclick="submitParentPledge()">${state.parentPledged?'서약 완료 ✓ (수정 저장)':'가정 서약 동참하기'}</button>
+    </div>
+    <div class="callout">💡 아이와 함께 읽고 하나씩 골라 보세요. 완벽하지 않아도 괜찮아요 — 함께 정하는 과정이 중요합니다.</div>
+  </div>`;
+};
+function togglePledge(i){state.pledged[i]=!state.pledged[i];render()}
+function submitParentPledge(){
+  if(state.pledged.filter(Boolean).length===0){toast('약속을 하나 이상 골라 주세요');return;}
+  state.parentPledged=true;celebrate('가정 서약 완료!','함께해 주셔서 고맙습니다 💚','🏡');setTimeout(render,2200);
+}
+
+let cheerTarget='공개 인증';
+VIEWS['parent:cheer']=()=>{
+  const recent=DB.posts.slice(0,4).map(p=>h`<div class="lrow"><div class="av">${p.emoji}</div>
+    <div style="flex:1"><div class="nm" style="font-size:13px">${esc(p.txt)}</div><div class="sb">${esc(p.who)}</div></div>
+    <button class="iconbtn" onclick="cheerPost(${p.id})">💬 응원</button></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec">💬 응원 한마디</h2>
+    <p class="muted" style="margin-top:-4px">아이들의 실천에 따뜻한 한마디를 남겨 주세요. 학년·반·번호·이름과 함께 표시돼요.</p>
+    <div class="card">
+      <div class="field"><label>응원 보낼 곳</label>
+        <input id="cheerTo" value="자녀 (3학년 ○반 ○번)" ></div>
+      <div class="field"><label>응원 메시지</label>
+        <textarea id="cheerMsg" placeholder="예: 매일 책 읽는 우리 딸, 정말 멋져요! 오늘도 화이팅 💪"></textarea></div>
+      <button class="btn a" onclick="sendCheer()">응원 보내기</button>
+    </div>
+    <h2 class="sec">🌟 최근 친구들 실천</h2>
+    <div class="card">${recent}</div>
+  </div>`;
+};
+function cheerPost(id){go('cheer');setTimeout(()=>{const t=el('cheerTo');if(t)t.value=DB.posts.find(p=>p.id===id).who},50)}
+function sendCheer(){const m=(el('cheerMsg')?.value||'').trim();if(!m){toast('응원 메시지를 적어 주세요');return;}celebrate('응원 전달!','따뜻한 한마디가 전해졌어요','💌');setTimeout(render,2200)}
+
+VIEWS['parent:news']=()=>{
+  const list=DB.notices.map(n=>h`<div class="card">
+    <span class="pill">${n.date}</span>
+    <div style="font-family:var(--display);font-size:17px;margin:7px 0 6px">${esc(n.title)}</div>
+    <p class="muted" style="margin:0">${esc(n.body)}</p></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec">📩 가정통신문 · 소식</h2>
+    ${list}
+    <div class="callout">본 가정통신문은 학교에서 보내는 안내이며, 학교 알리미 앱에서도 보실 수 있습니다.</div>
+  </div>`;
+};
+
+VIEWS['parent:faq']=()=>{
+  const list=DB.faq.map((f,i)=>h`<div class="card tight">
+    <div style="font-weight:800;display:flex;gap:7px"><span style="color:var(--sky)">Q.</span>${esc(f.q)}</div>
+    <p class="muted" style="margin:7px 0 0">${esc(f.a)}</p></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec">❓ 자주 묻는 질문</h2>
+    ${list}
+    <h2 class="sec">📞 긴급 연락</h2>
+    <div class="card"><p class="muted" style="margin:0">학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다. 보관 중에도 비상 상황은 즉시 해제됩니다.</p>
+      <div class="spacer"></div><button class="btn g" onclick="toast('실제 버전에서 학교 전화 연결')">📞 학교로 전화하기</button></div>
+  </div>`;
+};
+/* ======= 교사: 로그인 ======= */
+VIEWS['teacher:login']=()=>h`<div class="screen">
+  <div class="card hero" style="background:linear-gradient(135deg,#6b5647,#8a7260)">
+    <span class="deco">🧑‍🏫</span><h1>관리자 로그인</h1><p>담임·운영 선생님만 들어올 수 있어요.</p>
+  </div>
+  <div class="schoolmark"><img src="logo.png" alt="청미르초등학교 교표"><div><b>청미르초등학교</b><small>CHEONGMIREU ELEMENTARY SCHOOL</small></div></div>
+  <div class="card">
+    <div class="field"><label>관리자 비밀번호</label>
+      <input id="tpw" type="password" placeholder="관리자 비밀번호" inputmode="numeric"></div>
+    <button class="btn p" onclick="teacherLogin()">로그인</button>
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="adminSetup()">처음이신가요? 관리자 비밀번호 설정하기</button>
+    <div class="hint">* 맨 처음 한 번만 "설정하기"로 비밀번호를 정하고, 이후에는 로그인하세요.</div>
+  </div>
+</div>`;
+async function adminSetup(){
+  const pw=(el('tpw')?.value||'');
+  if(pw.length<4){ toast('4자리 이상으로 정해 주세요'); return; }
+  try{ await api('/admin/setup',{method:'POST',body:{password:pw}}); }
+  catch(e){ toast(e.message||'이미 설정되었을 수 있어요'); return; }
+  toast('관리자 비밀번호를 설정했어요'); teacherLogin();
+}
+async function teacherLogin(){
+  const pw=(el('tpw')?.value||'');
+  try{ const r=await api('/admin/login',{method:'POST',body:{password:pw}}); setAdminTok(r.token); }
+  catch(e){ toast(e.message||'로그인 실패'); return; }
+  state.teacherAuthed=true; state.view='home'; render(); afterNav('home'); toast('관리자로 로그인했어요');
+}
+
+/* ======= 교사: 현황 ======= */
+VIEWS['teacher:home']=()=>{
+  const totalJoined=DB.grades.reduce((s,g)=>s+g.joined,0);
+  const totalAll=DB.grades.reduce((s,g)=>s+g.total,0);
+  const track=DB.grades.map(g=>`<div class="lane"><span class="lab">${g.g}학년</span><div class="bar"><div class="fill" style="width:${pctOf(g)}%"></div></div><span class="pct">${g.joined}명</span></div>`).join('');
+  return h`<div class="screen">
+    <div class="card hero sky" style="color:var(--ink)">
+      <span class="cloud c1"></span><span class="cloud c2"></span>
+      <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
+      <span class="big" style="background:#fff;color:var(--sky)">선생님 공간 🧑‍🏫</span>
+      <h1 style="color:#1b6aa5;font-size:20px">오늘도 아이들의<br>세 가지 힘을 응원해요!</h1>
+      <p style="color:#3a6b8a">${DB.school} · ${DB.period}</p>
+    </div>
+    <div class="tiles">
+      <div class="tile accent"><div class="v">${STATS.totalCerts}</div><div class="k">누적 인증</div></div>
+      <div class="tile accent"><div class="v">${totalJoined}<span style="font-size:13px;color:var(--sub)">/${totalAll}</span></div><div class="k">선언 학생</div></div>
+      <div class="tile"><div class="v">${STATS.claps+STATS.hearts}</div><div class="k">주고받은 응원</div></div>
+      <div class="tile"><div class="v">${Math.round(totalJoined/totalAll*100)}%</div><div class="k">전교 참여율</div></div>
+    </div>
+    <h2 class="sec">👨‍👩‍👧 학년별 참여</h2>
+    <div class="card"><div class="track">${track}</div></div>
+    <div class="row">
+      <button class="btn p" onclick="go('zoneadmin')">💪 힘키우기 관리</button>
+      <button class="btn g" onclick="setRole('kiosk')">📟 공용 태블릿 켜기</button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost" onclick="go('stats')">📊 전체 통계 자세히 보기</button>
+  </div>`;
+};
+VIEWS['teacher:stats']=teacherStats;
+
+/* ======= 교사: 학생 관리 ======= */
+VIEWS['teacher:students']=()=>{
+  const list=(DB._students||[]);
+  const rows=list.length?list.map(s=>h`<div class="lrow"><div class="av">🧒</div>
+    <div style="flex:1"><div class="nm">${esc(s.name)} <span class="sb">(${s.grade}-${s.room}-${s.number})</span></div><div class="sb">인증 ${s.certs}건</div></div></div>`).join('')
+    :'<div class="emptyish"><span class="e">🌱</span>아직 선언한 학생이 없어요.</div>';
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">🧑‍🎓 선언 학생 관리</h2>
+    <div class="callout">실명·반·번호는 관리자만 볼 수 있어요. 공개 화면에는 학년·반까지만 표시됩니다.</div>
+    <div class="card">${rows}</div>
+    <h2 class="sec">👨‍👩‍👧 학년별 전체 학생 수</h2>
+    <div class="card">
+      ${[1,2,3,4,5,6].map(g=>{const row=(DB.grades||[]).find(x=>x.g===g)||{g,total:0};return `<div class="lrow"><div style="flex:1"><div class="nm">${g}학년</div><div class="sb">참여율 계산 기준</div></div><input id="gt${g}" type="number" inputmode="numeric" style="width:80px;border:1.5px solid var(--line);border-radius:10px;padding:7px;text-align:center" value="${row.total}"></div>`}).join('')}
+      <div class="spacer"></div><button class="btn p" onclick="saveGrades()">학생 수 저장</button>
+    </div>
+  </div>`;
+};
+async function saveGrades(){
+  const gradeTotals={};
+  for(let g=1;g<=6;g++){ const v=+(el('gt'+g)?.value||0); gradeTotals[g]=v; }
+  try{ await api('/admin/grades',{method:'POST',admin:true,body:{gradeTotals}}); toast('학생 수를 저장했어요'); await loadAdmin(); render(); }
+  catch(e){ toast(e.message||'저장 실패'); }
+}
+
+/* ======= 교사: 게시글/신고 관리 ======= */
+VIEWS['teacher:moderate']=()=>{
+  const rows=DB.posts.slice(0,6).map(p=>h`<div class="lrow"><div class="av" style="background:var(--${p.area}-soft)">${p.emoji}</div>
+    <div style="flex:1"><div class="nm" style="font-size:13px">${esc(p.txt)}</div><div class="sb">${esc(p.who)} · 👏${p.claps} ❤️${p.hearts}</div></div>
+    <button class="iconbtn danger" onclick="toast('게시글을 숨겼어요 (통계에서도 제외)')">숨김</button></div>`).join('');
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">📝 게시글 관리</h2>
+    <div class="callout warn">⚠️ 신고된 글 0건. 글은 바로 공개되고, 문제가 있으면 숨기거나 삭제할 수 있어요.</div>
+    <div class="card">${rows}</div>
+  </div>`;
+};
+
+/* ======= 교사: 라스존 관리 ======= */
+VIEWS['teacher:zoneadmin']=()=>h`<div class="screen">
+  <h2 class="sec" style="margin-top:4px">💪 힘키우기 관리</h2>
+  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone a" style="margin:0;padding:0;background:none"><div class="ic">🎨</div></div>
+    <div style="flex:1"><div style="font-weight:800">감성의 힘 · 예술 공모전</div><div class="muted">작품 ${DB.artworks.length}개 · 투표 중</div></div></div>
+    <div class="spacer"></div><div class="row"><button class="btn a sm" onclick="toast('작품 추가 화면 (프로토타입)')">+ 작품 추가</button><button class="btn g sm" onclick="toast('투표 열기/닫기 설정')">투표 설정</button></div></div>
+  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone s" style="margin:0;padding:0;background:none"><div class="ic">⚽</div></div>
+    <div style="flex:1"><div style="font-weight:800">몸의 힘 · 스포츠 놀이</div><div class="muted">검토 완료한 놀이만 학생에게 보여요</div></div></div>
+    <div class="spacer"></div><button class="btn s sm" onclick="toast('샘플 놀이 불러오기 — 모두 검토 전 상태')">샘플 놀이 불러오기</button></div>
+  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone r" style="margin:0;padding:0;background:none"><div class="ic">📖</div></div>
+    <div style="flex:1"><div style="font-weight:800">생각의 힘 · 추천 도서</div><div class="muted">도서 ${DB.books.length}권 · 감상평 관리</div></div></div></div>
+</div>`;
+
+/* ======= 교사: 콘텐츠 ======= */
+VIEWS['teacher:content']=()=>h`<div class="screen">
+  <h2 class="sec" style="margin-top:4px">🎨 콘텐츠 관리</h2>
+  <div class="card"><div style="font-weight:800;margin-bottom:8px">🖼️ 홈 사진 · 선언문</div>
+    <button class="btn g" onclick="toast('홈 상단 사진 교체 (최대 10MB)')">홈 사진 바꾸기</button>
+    <div class="spacer"></div><button class="btn g" onclick="toast('폰프리 선언문 편집')">선언문 편집</button></div>
+  <div class="card"><div style="font-weight:800;margin-bottom:8px">📩 가정통신문</div>
+    <button class="btn p" onclick="toast('새 가정통신문 작성 (프로토타입)')">+ 새 안내문 작성</button></div>
+  <div class="card"><div style="font-weight:800;margin-bottom:8px">👣 학교 발자취</div>
+    <p class="muted" style="margin:0 0 9px">행사·학생회 회의 등 학교 이야기를 모아요.</p>
+    <button class="btn g" onclick="toast('발자취 남기기 (프로토타입)')">+ 발자취 남기기</button></div>
+</div>`;
+
+/* ===== 한글 조합 오토마타 (화면 키보드용) ===== */
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const VCOMBO={'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ','ㅏㅣ':'ㅐ','ㅑㅣ':'ㅒ','ㅓㅣ':'ㅔ','ㅕㅣ':'ㅖ'};
+const VSPLIT={'ㅘ':'ㅗ','ㅙ':'ㅗ','ㅚ':'ㅗ','ㅝ':'ㅜ','ㅞ':'ㅜ','ㅟ':'ㅜ','ㅢ':'ㅡ','ㅐ':'ㅏ','ㅒ':'ㅑ','ㅔ':'ㅓ','ㅖ':'ㅕ'};
+const JCOMBO={'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ','ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ'};
+const JSPLIT={'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],'ㅄ':['ㅂ','ㅅ']};
+function hgChar(c){
+  if(c.cho && c.jung){const ci=CHO.indexOf(c.cho),ji=JUNG.indexOf(c.jung),ki=c.jong?JONG.indexOf(c.jong):0;
+    if(ci>=0&&ji>=0&&ki>=0) return String.fromCharCode(0xAC00+(ci*21+ji)*28+ki);}
+  return (c.cho||'')+(c.jung||'')+(c.jong||'');
+}
+function hgFlush(b){ b.t+=hgChar(b.c); b.c={cho:'',jung:'',jong:''}; }
+function hgInput(b,ch,isV){
+  const c=b.c;
+  if(isV){
+    if(!c.cho && !c.jung){ c.jung=ch; }
+    else if(c.cho && !c.jung){ c.jung=ch; }
+    else if(c.jung && !c.jong){ const m=VCOMBO[c.jung+ch]; if(m){c.jung=m;} else {hgFlush(b); b.c={cho:'',jung:ch,jong:''};} }
+    else { let remain='',moved=c.jong; if(JSPLIT[c.jong]){remain=JSPLIT[c.jong][0];moved=JSPLIT[c.jong][1];}
+      b.t+=hgChar({cho:c.cho,jung:c.jung,jong:remain}); b.c={cho:moved,jung:ch,jong:''}; }
+  } else {
+    if(!c.cho && !c.jung){ c.cho=ch; }
+    else if(c.cho && !c.jung){ b.t+=c.cho; b.c={cho:ch,jung:'',jong:''}; }
+    else if(c.cho && c.jung && !c.jong){ if(JONG.indexOf(ch)>0){c.jong=ch;} else {hgFlush(b); b.c={cho:ch,jung:'',jong:''};} }
+    else { const m=JCOMBO[c.jong+ch]; if(m){c.jong=m;} else {hgFlush(b); b.c={cho:ch,jung:'',jong:''};} }
+  }
+}
+function hgBack(b){ const c=b.c;
+  if(c.jong){ c.jong=JSPLIT[c.jong]?JSPLIT[c.jong][0]:''; }
+  else if(c.jung){ c.jung=VSPLIT[c.jung]||''; }
+  else if(c.cho){ c.cho=''; }
+  else { b.t=b.t.slice(0,-1); }
+}
+/* 키보드 상태 */
+const KB={ name:{t:'',c:{cho:'',jung:'',jong:''}}, msg:{t:'',c:{cho:'',jung:'',jong:''}}, target:'name', shift:false, photo:null };
+const SHIFTMAP={'ㄱ':'ㄲ','ㄷ':'ㄸ','ㅂ':'ㅃ','ㅅ':'ㅆ','ㅈ':'ㅉ'};
+const KBC=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const KBV=['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅐ','ㅔ'];
+function kbReset(){ KB.name={t:'',c:{cho:'',jung:'',jong:''}}; KB.msg={t:'',c:{cho:'',jung:'',jong:''}}; KB.photo=null; KB.shift=false; }
+function kbVal(t){ const b=KB[t]; return b.t+hgChar(b.c); }
+function kbTap(ch,isV){ hgInput(KB[KB.target],ch,isV); KB.shift=false; render(); }
+function kbBack(){ hgBack(KB[KB.target]); render(); }
+function kbSpace(){ const b=KB[KB.target]; hgFlush(b); b.t+=' '; render(); }
+function kbShift(){ KB.shift=!KB.shift; render(); }
+function kbQuickName(n){ KB.name={t:n,c:{cho:'',jung:'',jong:''}}; render(); }
+function kbPhotoPick(ev){ const f=ev.target.files&&ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{KB.photo=r.result;render();}; r.readAsDataURL(f); }
+function keyC(c){ const d=KB.shift?(SHIFTMAP[c]||c):c; return `<button class="kbkey" onclick="kbTap('${d}',false)">${d}</button>`; }
+function keyV(v){ return `<button class="kbkey" onclick="kbTap('${v}',true)">${v}</button>`; }
+function renderKeyboard(){
+  return `<div class="kbwrap">
+    <div class="kbrow">${KBC.slice(0,7).map(keyC).join('')}</div>
+    <div class="kbrow">${KBC.slice(7).map(keyC).join('')}</div>
+    <div class="kbrow">${KBV.slice(0,6).map(keyV).join('')}</div>
+    <div class="kbrow">${KBV.slice(6).map(keyV).join('')}</div>
+    <div class="kbrow">
+      <button class="kbkey fn ${KB.shift?'on':''}" onclick="kbShift()">쌍자음</button>
+      <button class="kbkey fn wide" onclick="kbSpace()">공백</button>
+      <button class="kbkey fn" onclick="kbBack()">⌫ 지움</button>
+    </div></div>`;
+}
+function kbBox(target,ph){ const v=kbVal(target);
+  return `<div class="kbbox">${v?esc(v):`<span class="ph">${ph}</span>`}<span class="caret"></span></div>`; }
+
+/* ======= 공용 태블릿 (키오스크) ======= */
+const kiosk={step:'idle', name:'', grade:3, room:1, no:1, area:null};
+function kstep(n,d){ const v=Math.max(1,Math.min(d==='grade'?6:40,kiosk[d]+n)); kiosk[d]=v; render(); }
+function viewKiosk(){
+  let inner='';
+  if(kiosk.step==='idle'){
+    inner=h`<div style="margin:auto;text-align:center;padding:24px 20px">
+      <img class="mascot-badge" src="mascot.svg" alt="청미르 마스코트">
+      <img src="logo.png" alt="교표" style="width:40px;height:40px;margin-bottom:6px">
+      <h1 style="font-family:var(--display);font-size:28px;margin:4px 0 6px">청미르 RAS</h1>
+      <p class="muted">교실 공용 태블릿 · 한 명씩 돌아가며 인증해요</p>
+      <div style="height:20px"></div>
+      <button class="btn p" style="font-size:18px;padding:18px" onclick="kioskStart()">👉 인증 시작하기</button>
+    </div>`;
+  } else if(kiosk.step==='who'){
+    const stepper=(lab,key)=>`<div><div class="lab" style="font-size:14px;color:var(--sub);font-weight:700">${lab}</div><div class="stepper" style="margin-top:5px"><button onclick="kstep(-1,'${key}')">−</button><div class="val">${kiosk[key]}</div><button onclick="kstep(1,'${key}')">+</button></div></div>`;
+    inner=h`<div style="margin:auto;padding:22px;width:100%;text-align:center">
+      <img class="mascot-badge" src="mascot.svg" alt="청미르" style="width:92px;margin-bottom:2px">
+      <h1 style="font-family:var(--display);font-size:24px;margin:0 0 4px">몇 학년 몇 반이에요?</h1>
+      <p class="muted" style="margin:0 0 18px">＋ / − 로 내 번호를 맞춰 주세요 🙂</p>
+      <div class="stepgrid" style="max-width:350px;margin:0 auto">${stepper('학년','grade')}${stepper('반','room')}${stepper('번호','no')}</div>
+      <div style="height:24px"></div>
+      <button class="btn p" style="max-width:350px;margin:0 auto" onclick="kioskWhoNext()">다음 →</button>
+    </div>`;
+  } else if(kiosk.step==='area'){
+    inner=h`<div style="margin:auto;padding:22px;width:100%">
+      <h1 style="font-family:var(--display);font-size:23px;margin:0 0 4px;text-align:center">반가워요! 🌈</h1>
+      <p class="muted" style="margin:0 0 16px;text-align:center">${esc(kiosk.name||'')} · 오늘 어떤 활동을 했나요?</p>
+      <div class="seg3" style="gap:10px">
+        <div class="opt r" onclick="kioskArea('r')" style="padding:24px 6px"><span class="e" style="font-size:38px">📖</span>독서</div>
+        <div class="opt a" onclick="kioskArea('a')" style="padding:24px 6px"><span class="e" style="font-size:38px">🎨</span>예술</div>
+        <div class="opt s" onclick="kioskArea('s')" style="padding:24px 6px"><span class="e" style="font-size:38px">⚽</span>스포츠</div>
+      </div>
+    </div>`;
+  } else if(kiosk.step==='write'){
+    const an={r:['독서','📖','r'],a:['예술','🎨','a'],s:['스포츠','⚽','s']}[kiosk.area];
+    inner=h`<div style="padding:16px 16px 22px">
+      <div style="text-align:center;margin-bottom:8px"><span class="tag ${an[2]}" style="font-size:13px;padding:4px 12px">${an[1]} ${an[0]} 인증</span></div>
+      <label style="font-size:13px;font-weight:700">오늘의 한마디</label>
+      ${kbBox('msg','예: 책을 읽고 재미있었어요')}
+      <div style="display:flex;gap:10px;align-items:center;margin:9px 0">
+        <label class="btn g sm" style="cursor:pointer;margin:0">📷 사진 찍기·올리기
+          <input type="file" accept="image/*" capture="environment" onchange="kbPhotoPick(event)" style="display:none"></label>
+        ${KB.photo?`<img class="photo-thumb" src="${KB.photo}"><button class="iconbtn danger" onclick="KB.photo=null;render()">삭제</button>`:'<span class="hint" style="margin:0">얼굴·이름표가 안 보이게 찍어요</span>'}
+      </div>
+      ${renderKeyboard()}
+      <div style="height:12px"></div>
+      <button class="btn p" onclick="kioskSubmit()">✅ 인증 완료</button>
+    </div>`;
+  } else if(kiosk.step==='done'){
+    inner=h`<div style="margin:auto;text-align:center;padding:34px 24px">
+      <div style="font-size:72px" class="big">✅</div>
+      <h1 style="font-family:var(--display);font-size:25px;margin:8px 0 6px">인증 완료!</h1>
+      <p class="muted" style="margin:0 0 10px">${esc(kiosk.name||'')} 친구, 잘했어요!</p>
+      ${KB.photo?`<img src="${KB.photo}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:2px solid var(--line);margin-bottom:8px">`:''}
+      ${kbVal('msg').trim()?`<p style="font-size:14px;margin:0 0 12px">"${esc(kbVal('msg').trim())}"</p>`:''}
+      <p class="muted">다음 친구에게 넘겨주세요 🙌</p>
+      <div style="height:16px"></div>
+      <button class="btn p" onclick="kioskStart()">다음 친구 시작하기</button>
+    </div>`;
+  }
+  return h`<div style="height:100vh;display:flex;flex-direction:column">
+    <div class="topbar" style="background:#2d2620">
+      <div class="brand" style="color:#fff"><span class="mark" style="background:#ffd23f;color:#3a2e1c">📟</span><span style="color:#fff">공용 태블릿<small style="color:#bbb">교실 인증기</small></span></div>
+      <button class="phoneoff" style="border:0;cursor:pointer;margin-left:auto" onclick="setRole('teacher')">✕ 종료</button>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow-y:auto">${inner}</div>
+  </div>`;
+}
+function kioskStart(){ kbReset(); KB.target='name'; kiosk.step='who'; kiosk.name=''; kiosk.area=null; render(); }
+function kioskWhoNext(){
+  kiosk.name = `${kiosk.grade}학년 ${kiosk.room}반 ${kiosk.no}번`;
+  KB.target='msg'; kiosk.step='area'; render();
+}
+function kioskArea(a){ kiosk.area=a; kiosk.step='write'; KB.target='msg'; render(); }
+async function kioskSubmit(){
+  const a=kiosk.area, note=kbVal('msg').trim();
+  kiosk.step='done'; render();
+  try{
+    const idr=await api('/kiosk-id',{method:'POST',body:{grade:+kiosk.grade,room:+kiosk.room,number:+kiosk.no}});
+    await fetch(API+'/certify',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+idr.token},body:JSON.stringify({area:a,note,source:'kiosk'})});
+    await loadStats(); const up=stageWentUp(); if(up>=0) celebrateStage(up); render();
+  }catch(e){ /* 공용 태블릿: 저장 실패해도 완료 화면은 유지 */ }
+  setTimeout(()=>{ if(kiosk.step==='done'){ kiosk.step='idle'; render(); } },6000);
+}
+/* ==APPEND== */
+boot();
+async function boot(){
+  state.teacherAuthed = !!getAdminTok();
+  try{
+    if(getToken()) await syncAll();
+    else await loadStats();
+  }catch(e){}
+  lastStageIdx=mirStage().i;
+  render();
+}
+</script>
+</body>
+</html>

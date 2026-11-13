@@ -1,0 +1,33 @@
+<svg viewBox="0 0 220 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="큰 미르">
+<defs>
+ <linearGradient id="bB" x1="0.3" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="#6fd0f8"/><stop offset="1" stop-color="#2fa3e8"/></linearGradient>
+ <linearGradient id="wB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3ecff"/><stop offset="1" stop-color="#8fd3f7"/></linearGradient>
+</defs>
+<style>.o{stroke:#2a7aa8;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}</style>
+<ellipse cx="110" cy="198" rx="42" ry="7" fill="#2fa3e8" opacity="0.14"/>
+<!-- big spread bat wings -->
+<path class="o" d="M72 110 C30 84 10 96 18 118 L34 110 L28 128 L50 120 L46 138 Z" fill="url(#wB)"/>
+<path class="o" d="M148 110 C190 84 210 96 202 118 L186 110 L192 128 L170 120 L174 138 Z" fill="url(#wB)"/>
+<!-- arrow tail -->
+<path class="o" d="M150 156 c24 10 32 -14 12 -24 l-6 12 z" fill="none" stroke-width="10"/>
+<path class="o" d="M156 136 l16 -6 -4 13z" fill="#2fa3e8"/>
+<!-- horns -->
+<path class="o" d="M86 50 L98 28 L108 50 Z" fill="#ffd23f"/>
+<path class="o" d="M112 50 L124 28 L134 50 Z" fill="#ffd23f"/>
+<!-- body -->
+<ellipse class="o" cx="110" cy="130" rx="36" ry="36" fill="url(#bB)"/>
+<ellipse class="o" cx="92" cy="160" rx="13" ry="9" fill="url(#bB)"/>
+<ellipse class="o" cx="128" cy="160" rx="13" ry="9" fill="url(#bB)"/>
+<!-- head -->
+<circle class="o" cx="110" cy="84" r="44" fill="url(#bB)"/>
+<ellipse cx="92" cy="68" rx="16" ry="11" fill="#fff" opacity="0.3"/>
+<circle cx="80" cy="94" r="9" fill="#ff9fb4" opacity="0.5"/>
+<circle cx="140" cy="94" r="9" fill="#ff9fb4" opacity="0.5"/>
+<path d="M86 86 Q95 73 104 86" fill="none" stroke="#1f5f84" stroke-width="4.5" stroke-linecap="round"/>
+<path d="M116 86 Q125 73 134 86" fill="none" stroke="#1f5f84" stroke-width="4.5" stroke-linecap="round"/>
+<path d="M94 95 Q110 109 126 95 Q118 104 110 104 Q102 104 94 95 Z" fill="#1f5f84"/>
+<path d="M115 101 q7 5 9 -2 l-2 9z" fill="#ff6b8a"/>
+<!-- sparkles -->
+<path d="M40 70 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#ffd23f"/>
+<path d="M182 150 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#ffd23f"/>
+</svg>
