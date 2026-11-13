@@ -326,17 +326,21 @@ async function api(path,opts={}){
   return data;
 }
 const AREA_EMOJI={r:'📖',a:'🎨',s:'⚽'};
-async function loadStats(){const s=await api('/stats');STATS.totalCerts=s.totalCerts;STATS.joinedStudents=s.joined;STATS.rasSplit=s.rasSplit||{r:0,a:0,s:0};STATS.claps=s.claps;STATS.hearts=s.hearts;DB.schoolGoal=s.schoolGoal||1200;}
+async function loadStats(){const s=await api('/stats');STATS.totalCerts=s.totalCerts;STATS.joinedStudents=s.joined;STATS.rasSplit=s.rasSplit||{r:0,a:0,s:0};STATS.claps=s.claps;STATS.hearts=s.hearts;DB.schoolGoal=s.schoolGoal||1200;if(s.trend)STATS.last14=s.trend.map(t=>({d:t.date.slice(5).replace('-','.'),v:t.count}));}
 async function loadMe(){const me=await api('/me',{method:'POST',auth:true});state.who=me.who||'';DB.myPower=me.power||{r:0,a:0,s:0};state.bonus=me.bonus||0;const done=new Set(me.days||[]);DB.myCal=Array.from({length:28},(_,i)=>({n:i+1,done:done.has(dateOfDay(i+1))}));}
 async function loadGallery(){const g=await api('/gallery');DB.posts=(g.items||[]).map(it=>({id:it.id,area:it.area,who:it.who,txt:it.note||'오늘의 실천',emoji:AREA_EMOJI[it.area]||'✨',photo:it.photo,claps:it.claps||0,hearts:it.hearts||0,cl:false,he:false}));}
 async function syncAll(){await loadStats();if(getToken())await loadMe();await loadGallery();}
-async function loadAdmin(){let totals={};try{const c=await api('/content');totals=c.gradeTotals||{};}catch(e){}let students=[];try{const a=await api('/admin/students',{admin:true});students=a.students||[];}catch(e){}const joined={};for(const s of students)joined[s.grade]=(joined[s.grade]||0)+1;DB.grades=[1,2,3,4,5,6].map(g=>({g,total:totals[g]||totals[String(g)]||0,joined:joined[g]||0}));DB._students=students;}
+async function loadContent(){const c=await api('/content');DB.notices=(c.notices||[]).map(n=>({id:n.id,date:n.date,title:n.title,body:n.body}));if(c.period)DB.period=c.period;return c;}
+async function loadAdmin(){let totals={};try{const c=await loadContent();totals=c.gradeTotals||{};}catch(e){}let students=[];try{const a=await api('/admin/students',{admin:true});students=a.students||[];}catch(e){}const joined={};for(const s of students)joined[s.grade]=(joined[s.grade]||0)+1;DB.grades=[1,2,3,4,5,6].map(g=>({g,total:totals[g]||totals[String(g)]||0,joined:joined[g]||0}));DB._students=students;}
 function afterNav(view){
   if(state.role==='student'&&!getToken())return;
   if(state.role==='student'){
     if(view==='gallery')loadGallery().then(render).catch(()=>{});
     else if(view==='home'||view==='stats'||view==='record')loadStats().then(()=>getToken()?loadMe():null).then(render).catch(()=>{});
-  } else if(state.role==='teacher'&&state.teacherAuthed&&(view==='home'||view==='students'||view==='stats'||view==='moderate')){
+  } else if(state.role==='parent'){
+    if(view==='home')loadContent().then(render).catch(()=>{});
+    else if(view==='cheer')loadGallery().then(render).catch(()=>{});
+  } else if(state.role==='teacher'&&state.teacherAuthed){
     Promise.all([loadStats().catch(()=>{}),loadAdmin().catch(()=>{}),loadGallery().catch(()=>{})]).then(render);
   }
 }
@@ -456,7 +460,7 @@ function myDone(){return DB.myCal.filter(d=>d.done).length}
 const TABS={
   student:[['home','🏠','홈'],['zone','💪','힘키우기'],['gallery','🌟','자랑터'],['stats','☁️','모아보기'],['record','📅','기록']],
   parent:[['home','🏠','홈'],['family','🏡','가정실천'],['cheer','💬','응원']],
-  teacher:[['home','📈','현황'],['students','🧑‍🎓','학생'],['moderate','📝','게시글'],['zoneadmin','💪','힘키우기'],['content','🎨','콘텐츠']],
+  teacher:[['home','📈','현황'],['students','🧑‍🎓','학생'],['moderate','📝','게시글'],['content','📩','공지']],
 };
 
 /* ============================ 렌더 ============================ */
@@ -556,8 +560,7 @@ function growthCard(){
   return `<div style="text-align:center;margin-bottom:10px">${vis}
       <div style="font-family:var(--display);font-size:17px;margin-top:2px">지금은 '${g.stage.name}' 단계예요</div></div>
     <div style="display:flex;align-items:flex-start;gap:3px;margin-bottom:11px">${chk}</div>
-    ${bar}
-    <div class="center" style="margin-top:12px"><button class="iconbtn" onclick="demoStageUp()">🎬 단계 업 축하 연출 보기</button></div>`;
+    ${bar}`;
 }
 /* 단계 업 감지 & 축하 연출 */
 let lastStageIdx=null;
@@ -589,12 +592,6 @@ function celebrateStage(idx){
     </div>
   </div>`);
   setTimeout(()=>{ if(document.querySelector('.celebrate.stage')) closeOverlay(); },5000);
-}
-function demoStageUp(){
-  const g=mirStage();
-  if(g.next){ STATS.totalCerts=g.next.min; lastStageIdx=g.i+1; celebrateStage(g.i+1); }
-  else { celebrateStage(g.i); }
-  setTimeout(render,120);
 }
 VIEWS['student:home']=()=>{
   const done=myDone();
@@ -655,11 +652,6 @@ function openCertify(){
       </div>
       <div class="field" style="margin-top:14px"><label>오늘의 한마디</label>
         <textarea id="certTxt" placeholder="예: 『해리엇』을 읽고 거북이가 궁금해졌어요"></textarea></div>
-      <div class="field"><label>사진 (선택)</label>
-        <label class="btn ghost" style="cursor:pointer" id="certPhotoBtn">📷 사진 찍기·올리기
-          <input type="file" accept="image/*" capture="environment" onchange="certPhotoPick(event)" style="display:none"></label>
-        <div id="certPhotoPrev"></div>
-        <div class="hint">얼굴·이름표가 보이지 않게 찍어 주세요.</div></div>
       <button class="btn p" onclick="submitCert()">인증 완료하기</button>
     </div></div>`);
 }
@@ -691,12 +683,11 @@ VIEWS['student:zone']=()=>h`<div class="screen">
 
 VIEWS['student:zone_r']=()=>{
   const list=DB.books.map(b=>h`<div class="lrow"><div class="av">${b.emoji}</div>
-    <div style="flex:1"><div class="nm">${esc(b.title)}</div><div class="sb">${esc(b.author)} · 추천 ${b.reco} · 감상평 ${b.reviews}</div></div>
-    <button class="iconbtn" onclick="toast('감상평 화면이 열립니다 (프로토타입)')">감상평</button></div>`).join('');
+    <div style="flex:1"><div class="nm">${esc(b.title)}</div><div class="sb">${esc(b.author)}</div></div></div>`).join('');
   return h`<div class="screen">
     <button class="btn g sm" onclick="go('zone')">← 힘키우기</button>
     <h2 class="sec">📖 생각의 힘 · 독서</h2>
-    <p class="muted" style="margin-top:-4px">친구들이 추천한 책을 읽고, 나도 좋은 책을 추천해 봐요.</p>
+    <p class="muted" style="margin-top:-4px">책을 읽고 '오늘의 힘 키우기'에서 독서로 인증해 봐요.</p>
     <div class="card tight" style="background:var(--r-soft);border-color:#bfe6cd">
       <div style="display:flex;align-items:center;gap:11px">
         <div style="font-size:30px">🏫</div>
@@ -706,21 +697,16 @@ VIEWS['student:zone_r']=()=>{
       <div class="spacer"></div>
       <button class="btn r" onclick="bonusCheck('책마루')">📚 책마루에서 읽었어요</button>
     </div>
+    <h2 class="sec">📚 추천 도서</h2>
     <div class="card">${list}</div>
-    <button class="btn r" onclick="toast('책 추천 작성 화면이 열립니다 (프로토타입)')">+ 책 추천하기</button>
   </div>`;
 };
 
-let voteSel=null;
 VIEWS['student:zone_a']=()=>{
-  const grid=DB.artworks.map(w=>h`<div class="post" onclick="pickVote(${w.id})" id="aw${w.id}" style="${voteSel===w.id?'outline:3px solid var(--a);outline-offset:1px':''}">
-    <div class="ph" style="background:var(--a-soft)">${w.emoji}</div>
-    <div class="meta"><div class="txt" style="font-weight:700">${esc(w.title)}</div>
-    <div class="who">👍 ${w.votes}표</div></div></div>`).join('');
   return h`<div class="screen">
     <button class="btn g sm" onclick="go('zone')">← 힘키우기</button>
     <h2 class="sec">🎨 감성의 힘 · 예술</h2>
-    <p class="muted" style="margin-top:-4px">마음에 드는 작품을 골라 투표해요. (1인 최대 3표)</p>
+    <p class="muted" style="margin-top:-4px">그리고 만들고 표현한 뒤, '오늘의 힘 키우기'에서 예술로 인증해 봐요.</p>
     <div class="card tight" style="background:var(--a-soft);border-color:#e0cff5">
       <div style="display:flex;align-items:center;gap:11px">
         <div style="font-size:30px">🖼️</div>
@@ -730,14 +716,10 @@ VIEWS['student:zone_a']=()=>{
       <div class="spacer"></div>
       <button class="btn a" onclick="bonusCheck('RAS 학교갤러리')">🎨 학교갤러리에서 활동했어요</button>
     </div>
-    <div class="gal">${grid}</div>
-    <div class="spacer"></div>
-    <button class="btn a" onclick="submitVote()">${voteSel?'이 작품에 투표하기':'작품을 먼저 골라 주세요'}</button>
+    <div class="callout">🌟 내가 만든 작품은 자랑터에 인증해 친구들과 나눠요!</div>
   </div>`;
 };
-function pickVote(id){voteSel=id;render()}
 async function bonusCheck(place){ try{ const r=await api('/bonus',{method:'POST',auth:true,body:{place}}); state.bonus=r.bonus; }catch(e){ toast(e.message||'저장 실패'); return; } celebrate('+2 보너스 점수! 🌟', place+'에서 실천했어요'); setTimeout(render,2200); }
-function submitVote(){if(!voteSel){toast('작품을 먼저 골라 주세요');return;}const w=DB.artworks.find(a=>a.id===voteSel);w.votes++;voteSel=null;celebrate('투표 완료!','소중한 한 표 고마워요','🗳️');setTimeout(render,2200)}
 
 /* 스포츠존 3단계 위저드 */
 const sp={step:0,people:null,place:null,kind:null};
@@ -768,7 +750,7 @@ function sportsResult(){
     </div>
     <div class="card"><div style="font-weight:800;margin-bottom:6px">🙌 이렇게 놀아요</div><p class="muted" style="margin:0">${r.how}</p></div>
     <div class="callout warn">⚠️ 꼭 지켜요! ${r.safe}</div>
-    <button class="btn s" onclick="toast('소감 작성 화면이 열립니다 (프로토타입)')">다 놀았어요 · 소감 남기기</button>
+    <div class="callout">⚽ 신나게 놀았다면 '오늘의 힘 키우기'에서 스포츠로 인증해요!</div>
   </div>`;
 }
 function spReset(){sp.step=0;sp.people=sp.place=sp.kind=null;render()}
@@ -825,8 +807,8 @@ VIEWS['student:stats']=()=>{
 
 /* ======= 교사: 운영 통계 (데이터) ======= */
 function teacherStats(){
-  const max=Math.max(...STATS.last14.map(d=>d.v));
-  const bars=STATS.last14.map(d=>`<div class="b"><div class="bar" style="height:${d.v/max*100}%"></div><div class="bl">${d.d.slice(3)}</div></div>`).join('');
+  const max=Math.max(1,...STATS.last14.map(d=>d.v));
+  const bars=STATS.last14.map(d=>`<div class="b"><div class="bar" style="height:${Math.round(d.v/max*100)}%"></div><div class="bl">${d.d.slice(3)}</div></div>`).join('');
   const tot=STATS.rasSplit.r+STATS.rasSplit.a+STATS.rasSplit.s;
   const gtrack=DB.grades.map(g=>`<div class="lane"><span class="lab">${g.g}학년</span><div class="bar"><div class="fill" style="width:${pctOf(g)}%"></div></div><span class="pct">${g.joined}명</span></div>`).join('');
   return h`<div class="screen">
@@ -890,7 +872,10 @@ function dayTap(n){
     </div></div>`);
 }
 /* ======= 학부모 ======= */
-VIEWS['parent:home']=()=>h`<div class="screen">
+VIEWS['parent:home']=()=>{
+  const nx=(DB.notices||[]).slice(0,3).map(n=>h`<div class="lrow" style="cursor:pointer" onclick="openNotice(${n.id})">
+    <div style="flex:1"><div class="nm" style="font-size:14px">${esc(n.title)}</div><div class="sb">${esc(n.date)}</div></div><span class="chev">›</span></div>`).join('');
+  return h`<div class="screen">
   <div class="card hero" style="background:linear-gradient(135deg,#27ae75,#5bd0a0 55%,#3aa7ef)">
     <img class="hero-mascot" src="mascot.svg" alt="청미르 마스코트">
     <h1>학부모님,<br>함께해 주세요</h1>
@@ -904,8 +889,17 @@ VIEWS['parent:home']=()=>h`<div class="screen">
     <div class="zone a" style="margin:0;padding:0;background:none"><div class="ic">💬</div></div>
     <div style="flex:1"><div style="font-weight:800">자녀 응원 한마디</div><div class="muted">아이의 실천에 힘을 보태 주세요</div></div><span class="chev">›</span>
   </div>
+  <h2 class="sec">📩 가정통신문 · 소식</h2>
+  <div class="card">${nx||'<div class="muted">아직 등록된 소식이 없어요.</div>'}</div>
   <div class="callout">📵 등교 보관(IN) → 하교 반환(OUT) → 비상 해제(EMERGENCY). 긴급 시 학교 대표 전화로 연락하시면 담임 선생님에게 전달됩니다.</div>
-</div>`;
+</div>`;};
+function openNotice(id){const n=(DB.notices||[]).find(x=>x.id===id);if(!n)return;
+  overlay(h`<div class="sheet-bg" onclick="if(event.target===this)closeOverlay()">
+    <div class="sheet"><button class="x" onclick="closeOverlay()">✕</button>
+    <span class="pill">${esc(n.date)}</span>
+    <h3 style="margin:8px 0 8px">${esc(n.title)}</h3>
+    <p class="muted" style="white-space:pre-wrap;margin:0">${esc(n.body)}</p>
+    </div></div>`);}
 
 VIEWS['parent:family']=()=>{
   const items=DB.pledges.map((p,i)=>h`<div class="opt-card ${state.pledged[i]?'on':''}" onclick="togglePledge(${i})">
@@ -1027,7 +1021,7 @@ VIEWS['teacher:home']=()=>{
     <h2 class="sec">👨‍👩‍👧 학년별 참여</h2>
     <div class="card"><div class="track">${track}</div></div>
     <div class="row">
-      <button class="btn p" onclick="go('zoneadmin')">💪 힘키우기 관리</button>
+      <button class="btn p" onclick="go('content')">📩 공지 올리기</button>
       <button class="btn g" onclick="setRole('kiosk')">📟 공용 태블릿 켜기</button>
     </div>
     <div class="spacer"></div>
@@ -1062,41 +1056,51 @@ async function saveGrades(){
 
 /* ======= 교사: 게시글/신고 관리 ======= */
 VIEWS['teacher:moderate']=()=>{
-  const rows=DB.posts.slice(0,6).map(p=>h`<div class="lrow"><div class="av" style="background:var(--${p.area}-soft)">${p.emoji}</div>
+  const rows=DB.posts.length?DB.posts.map(p=>h`<div class="lrow"><div class="av" style="background:var(--${p.area}-soft)">${p.emoji}</div>
     <div style="flex:1"><div class="nm" style="font-size:13px">${esc(p.txt)}</div><div class="sb">${esc(p.who)} · 👏${p.claps} ❤️${p.hearts}</div></div>
-    <button class="iconbtn danger" onclick="toast('게시글을 숨겼어요 (통계에서도 제외)')">숨김</button></div>`).join('');
+    <button class="iconbtn danger" onclick="hidePost(${p.id})">숨김</button></div>`).join('')
+    :'<div class="emptyish"><span class="e">🌱</span>아직 게시글이 없어요.</div>';
   return h`<div class="screen">
     <h2 class="sec" style="margin-top:4px">📝 게시글 관리</h2>
-    <div class="callout warn">⚠️ 신고된 글 0건. 글은 바로 공개되고, 문제가 있으면 숨기거나 삭제할 수 있어요.</div>
+    <div class="callout warn">⚠️ 글은 바로 공개돼요. 문제가 있는 글은 "숨김"을 누르면 자랑터·통계에서 즉시 제외됩니다.</div>
     <div class="card">${rows}</div>
   </div>`;
 };
+async function hidePost(id){
+  try{ await api('/admin/hide',{method:'POST',admin:true,body:{certId:id,hidden:true}});
+    await Promise.all([loadGallery().catch(()=>{}),loadStats().catch(()=>{})]); render(); toast('게시글을 숨겼어요');
+  }catch(e){ toast(e.message||'처리 실패'); }
+}
 
-/* ======= 교사: 라스존 관리 ======= */
-VIEWS['teacher:zoneadmin']=()=>h`<div class="screen">
-  <h2 class="sec" style="margin-top:4px">💪 힘키우기 관리</h2>
-  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone a" style="margin:0;padding:0;background:none"><div class="ic">🎨</div></div>
-    <div style="flex:1"><div style="font-weight:800">감성의 힘 · 예술 공모전</div><div class="muted">작품 ${DB.artworks.length}개 · 투표 중</div></div></div>
-    <div class="spacer"></div><div class="row"><button class="btn a sm" onclick="toast('작품 추가 화면 (프로토타입)')">+ 작품 추가</button><button class="btn g sm" onclick="toast('투표 열기/닫기 설정')">투표 설정</button></div></div>
-  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone s" style="margin:0;padding:0;background:none"><div class="ic">⚽</div></div>
-    <div style="flex:1"><div style="font-weight:800">몸의 힘 · 스포츠 놀이</div><div class="muted">검토 완료한 놀이만 학생에게 보여요</div></div></div>
-    <div class="spacer"></div><button class="btn s sm" onclick="toast('샘플 놀이 불러오기 — 모두 검토 전 상태')">샘플 놀이 불러오기</button></div>
-  <div class="card tight"><div style="display:flex;align-items:center;gap:11px"><div class="zone r" style="margin:0;padding:0;background:none"><div class="ic">📖</div></div>
-    <div style="flex:1"><div style="font-weight:800">생각의 힘 · 추천 도서</div><div class="muted">도서 ${DB.books.length}권 · 감상평 관리</div></div></div></div>
-</div>`;
-
-/* ======= 교사: 콘텐츠 ======= */
-VIEWS['teacher:content']=()=>h`<div class="screen">
-  <h2 class="sec" style="margin-top:4px">🎨 콘텐츠 관리</h2>
-  <div class="card"><div style="font-weight:800;margin-bottom:8px">🖼️ 홈 사진 · 선언문</div>
-    <button class="btn g" onclick="toast('홈 상단 사진 교체 (최대 10MB)')">홈 사진 바꾸기</button>
-    <div class="spacer"></div><button class="btn g" onclick="toast('폰프리 선언문 편집')">선언문 편집</button></div>
-  <div class="card"><div style="font-weight:800;margin-bottom:8px">📩 가정통신문</div>
-    <button class="btn p" onclick="toast('새 가정통신문 작성 (프로토타입)')">+ 새 안내문 작성</button></div>
-  <div class="card"><div style="font-weight:800;margin-bottom:8px">👣 학교 발자취</div>
-    <p class="muted" style="margin:0 0 9px">행사·학생회 회의 등 학교 이야기를 모아요.</p>
-    <button class="btn g" onclick="toast('발자취 남기기 (프로토타입)')">+ 발자취 남기기</button></div>
-</div>`;
+/* ======= 교사: 공지(가정통신문) 관리 ======= */
+VIEWS['teacher:content']=()=>{
+  const list=(DB.notices||[]).length?(DB.notices).map(n=>h`<div class="lrow" style="align-items:flex-start">
+    <div style="flex:1"><div class="nm" style="font-size:14px">${esc(n.title)}</div><div class="sb">${esc(n.date)} · ${esc((n.body||'').slice(0,38))}${(n.body||'').length>38?'…':''}</div></div>
+    <button class="iconbtn danger" onclick="deleteNotice(${n.id})">삭제</button></div>`).join('')
+    :'<div class="emptyish"><span class="e">🌱</span>아직 올린 공지가 없어요.</div>';
+  return h`<div class="screen">
+    <h2 class="sec" style="margin-top:4px">📩 가정통신문 · 공지</h2>
+    <p class="muted" style="margin-top:-4px">여기서 올린 공지는 학부모 홈 화면에 바로 표시돼요.</p>
+    <div class="card">
+      <div class="field"><label>제목</label><input id="ntTitle" placeholder="예: 11월 폰프리 실천 주간 안내"></div>
+      <div class="field"><label>내용</label><textarea id="ntBody" placeholder="가정에 전할 안내 내용을 적어 주세요."></textarea></div>
+      <button class="btn p" onclick="createNotice()">+ 공지 올리기</button>
+    </div>
+    <h2 class="sec">📋 올린 공지</h2>
+    <div class="card">${list}</div>
+  </div>`;
+};
+async function createNotice(){
+  const title=(el('ntTitle')?.value||'').trim(), body=(el('ntBody')?.value||'').trim();
+  if(!title){toast('제목을 입력해 주세요');return;}
+  if(!body){toast('내용을 입력해 주세요');return;}
+  try{ await api('/admin/notice',{method:'POST',admin:true,body:{title,body}}); await loadContent(); render(); toast('공지를 올렸어요'); }
+  catch(e){ toast(e.message||'저장 실패'); }
+}
+async function deleteNotice(id){
+  try{ await api('/admin/notice/delete',{method:'POST',admin:true,body:{id}}); await loadContent(); render(); toast('공지를 삭제했어요'); }
+  catch(e){ toast(e.message||'삭제 실패'); }
+}
 
 /* ===== 한글 조합 오토마타 (화면 키보드용) ===== */
 const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -1203,11 +1207,7 @@ function viewKiosk(){
       <div style="text-align:center;margin-bottom:8px"><span class="tag ${an[2]}" style="font-size:13px;padding:4px 12px">${an[1]} ${an[0]} 인증</span></div>
       <label style="font-size:13px;font-weight:700">오늘의 한마디</label>
       ${kbBox('msg','예: 책을 읽고 재미있었어요')}
-      <div style="display:flex;gap:10px;align-items:center;margin:9px 0">
-        <label class="btn g sm" style="cursor:pointer;margin:0">📷 사진 찍기·올리기
-          <input type="file" accept="image/*" capture="environment" onchange="kbPhotoPick(event)" style="display:none"></label>
-        ${KB.photo?`<img class="photo-thumb" src="${KB.photo}"><button class="iconbtn danger" onclick="KB.photo=null;render()">삭제</button>`:'<span class="hint" style="margin:0">얼굴·이름표가 안 보이게 찍어요</span>'}
-      </div>
+      <div style="height:9px"></div>
       ${renderKeyboard()}
       <div style="height:12px"></div>
       <button class="btn p" onclick="kioskSubmit()">✅ 인증 완료</button>
@@ -1217,7 +1217,6 @@ function viewKiosk(){
       <div style="font-size:72px" class="big">✅</div>
       <h1 style="font-family:var(--display);font-size:25px;margin:8px 0 6px">인증 완료!</h1>
       <p class="muted" style="margin:0 0 10px">${esc(kiosk.name||'')} 친구, 잘했어요!</p>
-      ${KB.photo?`<img src="${KB.photo}" style="width:120px;height:120px;border-radius:16px;object-fit:cover;border:2px solid var(--line);margin-bottom:8px">`:''}
       ${kbVal('msg').trim()?`<p style="font-size:14px;margin:0 0 12px">"${esc(kbVal('msg').trim())}"</p>`:''}
       <p class="muted">다음 친구에게 넘겨주세요 🙌</p>
       <div style="height:16px"></div>
