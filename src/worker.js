@@ -76,7 +76,8 @@ function maskWho(s) { return `${s.grade}학년 ${s.room}반`; }
 async function handleApi(req, env, url) {
   const path = url.pathname.replace(/^\/api/, "");
   const method = req.method;
-  const body = method === "POST" ? await req.json().catch(() => ({})) : {};
+  // /upload 는 이미지 원본(바디 스트림)을 그대로 R2에 넘겨야 하므로 JSON 파싱하지 않음
+  const body = (method === "POST" && path !== "/upload") ? await req.json().catch(() => ({})) : {};
 
   if (path === "/health") return json({ ok: true });
 
@@ -145,8 +146,11 @@ async function handleApi(req, env, url) {
     if (!env.PHOTOS) return bad("사진 기능이 아직 켜져 있지 않아요(R2)", 400);
     const ct = req.headers.get("content-type") || "application/octet-stream";
     if (!ct.startsWith("image/")) return bad("이미지 파일만 업로드할 수 있어요");
+    const buf = await req.arrayBuffer();
+    if (!buf || buf.byteLength === 0) return bad("빈 파일이에요");
+    if (buf.byteLength > 8 * 1024 * 1024) return bad("사진은 8MB 이하로 올려 주세요");
     const key = `cert/${id}/${uuid()}`;
-    await env.PHOTOS.put(key, req.body, { httpMetadata: { contentType: ct } });
+    await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: ct } });
     return json({ key });
   }
 
