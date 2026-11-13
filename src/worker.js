@@ -195,7 +195,23 @@ async function handleApi(req, env, url) {
     let claps = 0, hearts = 0;
     for (const row of react.results) { if (row.kind === "clap") claps = row.c; if (row.kind === "heart") hearts = row.c; }
     const goal = parseInt((await getSetting(env, "school_goal", "1200")), 10);
-    return json({ totalCerts: tot.c, joined: joined.c, rasSplit: split, claps, hearts, schoolGoal: goal });
+        const today = kstDate();
+    const startDt = new Date(today + "T00:00:00Z");
+    startDt.setUTCDate(startDt.getUTCDate() - 13);
+    const startStr = startDt.toISOString().slice(0, 10);
+    const dayRows = await env.DB.prepare(
+      "SELECT date, COUNT(*) AS c FROM certs WHERE hidden=0 AND date>=? GROUP BY date"
+    ).bind(startStr).all();
+    const dayMap = {};
+    for (const row of dayRows.results) dayMap[row.date] = row.c;
+    const trend = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(startStr + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + i);
+      const ds = d.toISOString().slice(0, 10);
+      trend.push({ date: ds, count: dayMap[ds] || 0 });
+    }
+    return json({ totalCerts: tot.c, joined: joined.c, rasSplit: split, claps, hearts, schoolGoal: goal, trend });
   }
 
   // ---- 자랑터(갤러리) ----
